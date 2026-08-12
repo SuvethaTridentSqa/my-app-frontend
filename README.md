@@ -1,16 +1,59 @@
-# React + Vite
+This project is an AI-powered URL shortener that helps users create, customize, secure, and share short links easily.
+It also provides analytics, QR code generation, geo-traffic insights, and an AI chatbot for a better user experience.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Technologies Used
 
-Currently, two official plugins are available:
+- React - 19.2.7
+- Vite - 8.1.1
+- React Router DOM - 7.18.2
+- Axios - 1.19.0
+- Recharts - 3.10.1
+- Cytoscape - 3.34.0
+- React Force Graph 2D - 1.29.1
+- QRCode React - 4.2.0
+- React Icons - 5.7.0
+- Lucide React - 1.28.0
+- Day.js - 1.11.21
+- Hugging Face Transformers - 4.2.0
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Prerequisites
 
-## React Compiler
+- Node.js (LTS version recommended)
+- npm
+- Backend/API server
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Frontend Project Structure
 
-## Expanding the ESLint configuration
+```text
+frontend/
+├── src/
+│   ├── components/    # Reusable UI components
+│   ├── pages/         # Application pages
+│   ├── assets/        # Images and other static assets
+│   ├── App.jsx        # Main React component
+│   └── main.jsx       # Application entry point
+│
+├── package.json       # Frontend dependencies and scripts
+└── vite.config.js     # Vite configuration
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd <project-folder>
+```
+
+### 2.Install the dependencies
+
+```bash
+npm install
+```
+
+## To run the Development Server
+
+```bash
+npm run dev
+```
