@@ -169,7 +169,7 @@ export default function Chat() {
           },
         ],
         {
-          max_new_tokens: 100,
+          max_new_tokens: 1000,
           do_sample: false,
         },
       );
@@ -375,7 +375,7 @@ export default function Chat() {
           <div className="chat-messages">
             {messages.length === 0 ? (
               <div className="message-empty">
-                Start a conversation with the AI.
+                Start a conversation with the AI,Always try with New Chat first.
               </div>
             ) : (
               messages.map((message, index) => (
@@ -386,9 +386,7 @@ export default function Chat() {
                   } ${message.status === "failed" ? "failed" : ""}`}
                 >
                   <div className="message-role">
-                    {message.status === "failed"
-                      ? "⚠️ AI Failed"
-                      : message.role}
+                    {message.status === "failed" ? " AI Failed" : message.role}
                   </div>
 
                   <div className="message-content">{message.content}</div>
