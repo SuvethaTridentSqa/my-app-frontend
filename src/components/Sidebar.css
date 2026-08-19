@@ -287,6 +287,33 @@ body {
   font-weight: 600;
 }
 
+.failed-indicator {
+  color: #d9534f;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+/* ===========================
+   RAG SOURCES
+=========================== */
+
+.rag-sources {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.rag-sources-list {
+  margin-top: 8px;
+}
+
+.rag-source-item {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
 /* ===========================
    SIDEBAR
 =========================== */

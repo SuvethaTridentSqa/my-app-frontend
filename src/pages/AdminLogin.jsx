@@ -40,14 +40,19 @@ export default function AdminLogin() {
         captchaAnswer,
       });
       const user = response.data.admin || { email, role: "admin" };
-      setAuth(user);
+      const token = response.data.token;
+      if (!token) {
+        throw new Error("No authentication token returned by server");
+      }
+      setAuth(user, token);
       localStorage.setItem("user", JSON.stringify(user));
+      // console.log("Admin login successful:", user)
+      // console.log("====Token====:", token);
       navigate("/dashboard");
     } catch (err) {
-      console.error("Login Error:", err);
+      // console.error("Login Error:", err);
       console.error("Response:", err.response);
-      console.error("Data:", err.response?.data);
-
+      // console.error("Data:", err.response?.data);
       setError(
         err.response?.data?.message || err.message || "Admin login failed.",
       );

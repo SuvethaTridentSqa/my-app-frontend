@@ -14,6 +14,7 @@ import LinkVisualizer from "./pages/LinkVisualizer";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "./pages/ProtectedRoutes";
 import ChatPage from "./pages/Chat";
+import "./ai/transformersConfig";
 import "./App.css";
 // import AITest from "./ai/AITest";
 

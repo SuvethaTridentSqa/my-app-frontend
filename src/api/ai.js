@@ -1,8 +1,17 @@
 import api from "./api";
-export const getChatConversations = () => api.get("/ai/conversations");
-export const getConversation = (id) => api.get(`/ai/conversations/${id}`);
-export const createChatConversation = (title) =>
-  api.post("/ai/conversations", { title });
+
+export const getChatConversations = async () => {
+  return await api.get("/ai/conversations");
+};
+
+export const getConversation = async (conversationId) => {
+  return await api.get(`/ai/conversations/${conversationId}`);
+};
+
+export const createChatConversation = async (title) => {
+  return await api.post("/ai/conversations", { title });
+};
+
 export const sendChatMessage = ({
   prompt,
   conversationId,

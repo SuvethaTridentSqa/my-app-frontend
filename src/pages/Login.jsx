@@ -41,7 +41,14 @@ export default function Login() {
         captchaAnswer,
       });
       const user = response.data.user || { email, role: "user" };
-      setAuth(user);
+      const token = response.data.token;
+      if (!user) {
+        throw new Error("No user returned by server");
+      }
+      if (!token) {
+        throw new Error("No authentication token returned by server");
+      }
+      setAuth(user, token);
       navigate("/dashboard");
     } catch (err) {
       setError(
@@ -49,10 +56,6 @@ export default function Login() {
       );
     }
   }
-  // const handleLogin = async () => {
-  //   // login API
-  //   navigate("/dashboard");
-  // };
 
   return (
     <div className="login-page">
