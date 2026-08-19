@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { loadLocalModel } from "../ai/localModel.js";
-import { generateEmbedding } from "../ai/embeddingModel.js";
+import { generateEmbedding, loadEmbeddingModel } from "../ai/embeddingModel.js";
 import BackButton from "../components/BackButton";
 import UsageBadge from "../components/UsageBadge";
 import {
@@ -23,7 +23,7 @@ export default function Chat() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [ragSources, setRagSources] = useState([]);
   const navigate = useNavigate();
-
+  const generatorRef = useRef(null);
   // LOAD ALL CONVERSATIONS
   const loadConversations = useCallback(async () => {
     try {
@@ -120,9 +120,9 @@ export default function Chat() {
     if (!messages.length) {
       return [];
     }
-    return messages.slice(-6).map((message) => ({
+    return messages.slice(-4).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
-      content: message.content,
+      content: String(message.content || "").slice(0, 1000),
     }));
   }, [messages]);
 
@@ -155,6 +155,15 @@ export default function Chat() {
         },
       ]);
       setPrompt("");
+      if (!generatorRef.current) {
+        // console.log("[AI] Loading local AI models...");
+        const [generator] = await Promise.all([
+          loadLocalModel(),
+          loadEmbeddingModel(),
+        ]);
+        generatorRef.current = generator;
+        // console.log("[AI] Local AI models loaded.");
+      }
       try {
         // console.log("[RAG] Generating query embedding...");
         const queryEmbedding = await generateEmbedding(text);
@@ -165,7 +174,7 @@ export default function Chat() {
         //   dimensions: queryEmbedding.length,
         // });
         // console.log("[RAG] Searching vector database...");
-        const ragResponse = await searchRAG(text, 5, queryEmbedding);
+        const ragResponse = await searchRAG(text, 3, queryEmbedding);
         const retrievedChunks = ragResponse?.results || [];
         // console.log("[RAG] Retrieved chunks:", retrievedChunks);
         const sources = retrievedChunks.map((chunk, index) => ({
@@ -198,8 +207,12 @@ ${chunk.text || ""}
         }
         // console.log("[RAG] CONTEXT SENT TO GRANITE:");
         // console.log(ragContext);
-        // console.log("[AI] Loading local AI model...");
-        const generator = await loadLocalModel();
+        console.log("[AI] Loading local AI model...");
+        // const generator = await loadLocalModel(); //temporarily commended this
+        const generator = generatorRef.current;
+        if (!generator) {
+          throw new Error("Local AI model is not ready.");
+        }
         // console.log("[AI] Local AI model loaded.");
         // console.log("[CHAT] Conversation history:", conversationHistory);
         const systemPrompt = `
@@ -249,7 +262,7 @@ END RETRIEVED CONTEXT
         // console.log("[AI] Messages sent to model:", modelMessages);
         // console.log("[AI] Generating response...");
         const output = await generator(modelMessages, {
-          max_new_tokens: 150,
+          max_new_tokens: 120,
           do_sample: false,
         });
         // console.log("[AI] Raw model output:", output);
@@ -329,15 +342,60 @@ END RETRIEVED CONTEXT
       loadConversations,
     ],
   );
+
+  const benchmarkLocalModel = async () => {
+    const generator = await loadLocalModel();
+    const messages = [
+      {
+        role: "user",
+        content: "Explain quantum computing in three short sentences.",
+      },
+    ];
+    await generator(messages, {
+      max_new_tokens: 100,
+      do_sample: false,
+    });
+    const results = [];
+    for (let i = 1; i <= 5; i++) {
+      const start = performance.now();
+      const output = await generator(messages, {
+        max_new_tokens: 100,
+        do_sample: false,
+      });
+      const end = performance.now();
+      const seconds = (end - start) / 1000;
+      // console.log(`Run ${i}: ${seconds.toFixed(3)}s`);
+      results.push(seconds);
+    }
+    const average = results.reduce((a, b) => a + b, 0) / results.length;
+    // console.log(`Average: ${average.toFixed(3)}s`);
+    return {
+      runs: results,
+      average,
+    };
+  };
+
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
   const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handlePromtSubmit();
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
     }
   };
+
+  const formatMessageText = (text) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, index) => {
+      if (/^\*\*[^*]+\*\*$/.test(part)) {
+        return <strong key={index}>{part.replace(/^\*\*|\*\*$/g, "")}</strong>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <section className="page-content chat-page">
       <BackButton onClick={() => navigate(-1)} />
@@ -429,7 +487,58 @@ END RETRIEVED CONTEXT
                   <div className="message-role">
                     {message.status === "failed" ? " AI Failed" : message.role}
                   </div>
-                  <div className="message-content">{message.content}</div>
+                  <div className="message-content">
+                    {message.content
+                      .split(/\n\s*\n/)
+                      .map((block, blockIndex) => {
+                        const lines = block
+                          .split("\n")
+                          .map((line) => line.trim())
+                          .filter(Boolean);
+                        if (!lines.length) return null;
+                        const isNumberedList = lines.every((line) =>
+                          /^\d+[.)]\s+/.test(line),
+                        );
+                        if (isNumberedList) {
+                          return (
+                            <ol
+                              key={blockIndex}
+                              className="message-list numbered-list"
+                            >
+                              {lines.map((line, index) => {
+                                const text = line.replace(/^\d+[.)]\s+/, "");
+                                return (
+                                  <li key={index}>{formatMessageText(text)}</li>
+                                );
+                              })}
+                            </ol>
+                          );
+                        }
+                        const isBulletList = lines.every((line) =>
+                          /^[-*•]\s+/.test(line),
+                        );
+                        if (isBulletList) {
+                          return (
+                            <ul
+                              key={blockIndex}
+                              className="message-list bullet-list"
+                            >
+                              {lines.map((line, index) => {
+                                const text = line.replace(/^[-*•]\s+/, "");
+                                return (
+                                  <li key={index}>{formatMessageText(text)}</li>
+                                );
+                              })}
+                            </ul>
+                          );
+                        }
+                        return (
+                          <p key={blockIndex} className="message-paragraph">
+                            {formatMessageText(block)}
+                          </p>
+                        );
+                      })}
+                  </div>
                 </div>
               ))
             )}
@@ -470,16 +579,19 @@ END RETRIEVED CONTEXT
           <form className="chat-form" onSubmit={handlePromptSubmit}>
             <textarea
               value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              placeholder="Type your question here..."
+              onChange={(event) => {
+                setPrompt(event.target.value.slice(0, 2000));
+              }}
+              placeholder="Type your Questions here..."
               rows={3}
               disabled={loading}
+              onKeyDown={handleKeyDown}
             />
+            <small>{prompt.length}/2000 characters</small>
             <button
               className="primary-button send-button"
               type="submit"
               disabled={loading || !prompt.trim()}
-              onKeyDown={handleKeyDown}
             >
               {loading ? `Generating... ${elapsedSeconds}s` : "Send"}
             </button>
