@@ -25,28 +25,21 @@ export default function CustomAlias() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setStatus("");
     setShortUrl("");
-
     try {
       const payload = {
         originalUrl: targetUrl.trim(),
         alias: alias.trim(),
       };
-
       const response = await createUrl(payload);
-
       setShortUrl(
         response.data.shortUrl ||
           `${window.location.origin}/u/${response.data.slug}`,
       );
-
       setStatus("Custom alias created successfully.");
-
       // refresh stored urls
       loadUrls();
-
       setAlias("");
       setTargetUrl("");
     } catch (error) {
@@ -57,16 +50,13 @@ export default function CustomAlias() {
   return (
     <section className="page-content">
       <BackButton />
-
       <header className="page-header">
         <div>
           <h2>Custom Alias</h2>
           <p>Create unique short links with your own alias.</p>
         </div>
-
         <UsageBadge count={savedUrls.length} />
       </header>
-
       <div className="dashboard-toolbar">
         <form className="feature-form" onSubmit={handleSubmit}>
           <label>
@@ -79,7 +69,6 @@ export default function CustomAlias() {
               required
             />
           </label>
-
           <label>
             Original URL
             <input
@@ -90,15 +79,11 @@ export default function CustomAlias() {
               required
             />
           </label>
-
           {status && <div className="message-box">{status}</div>}
-
           <button type="submit">Save alias</button>
-
           {shortUrl && (
             <div className="link-preview">
               <span>{shortUrl}</span>
-
               <button
                 type="button"
                 className="secondary-button"
@@ -109,25 +94,19 @@ export default function CustomAlias() {
             </div>
           )}
         </form>
-
         <div className="admin-table">
           <div className="admin-row admin-header">
             <span>Alias</span>
-
             <span>Original URL</span>
-
             <span>Created</span>
           </div>
-
           {savedUrls.map((item) => (
             <div key={item._id} className="admin-row">
               <span>{item.slug}</span>
-
               {/* <span className="truncate">{item.originalUrl}</span> */}
               <span className="truncate">
                 {"*".repeat(item.originalUrl.length / 2)}
               </span>
-
               <span>{new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
           ))}
