@@ -120,6 +120,7 @@ export default function Sidebar() {
 
             {auth.isAuthenticated && (
               <button className="logout-btn" onClick={handleLogout}>
+                <span className="tooltip">Logout</span>
                 <LogOut size={18} />
               </button>
             )}

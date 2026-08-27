@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { loadLocalModel } from "../ai/localModel.js";
 import { generateEmbedding, loadEmbeddingModel } from "../ai/embeddingModel.js";
+import { MdOutlineContentCopy } from "react-icons/md";
+import { LuCopyCheck } from "react-icons/lu";
 import BackButton from "../components/BackButton";
 import UsageBadge from "../components/UsageBadge";
 import {
@@ -22,6 +24,7 @@ export default function Chat() {
   const [conversationTitle, setConversationTitle] = useState("New Chat");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [ragSources, setRagSources] = useState([]);
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
   const navigate = useNavigate();
   const generatorRef = useRef(null);
   // LOAD ALL CONVERSATIONS
@@ -262,7 +265,7 @@ END RETRIEVED CONTEXT
         // console.log("[AI] Messages sent to model:", modelMessages);
         // console.log("[AI] Generating response...");
         const output = await generator(modelMessages, {
-          max_new_tokens: 120,
+          max_new_tokens: 1200,
           do_sample: false,
         });
         // console.log("[AI] Raw model output:", output);
@@ -352,7 +355,7 @@ END RETRIEVED CONTEXT
       },
     ];
     await generator(messages, {
-      max_new_tokens: 100,
+      max_new_tokens: 1000,
       do_sample: false,
     });
     const results = [];
@@ -373,6 +376,19 @@ END RETRIEVED CONTEXT
       runs: results,
       average,
     };
+  };
+
+  const copyMessage = async (content, index) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageIndex(index);
+
+      setTimeout(() => {
+        setCopiedMessageIndex(null);
+      }, 1500);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+    }
   };
 
   useEffect(() => {
@@ -487,7 +503,7 @@ END RETRIEVED CONTEXT
                   <div className="message-role">
                     {message.status === "failed" ? " AI Failed" : message.role}
                   </div>
-                  <div className="message-content">
+                  {/* <div className="message-content">
                     {message.content
                       .split(/\n\s*\n/)
                       .map((block, blockIndex) => {
@@ -538,7 +554,89 @@ END RETRIEVED CONTEXT
                           </p>
                         );
                       })}
+                  </div> */}
+                  <div className="message-content">
+                    {message.content
+                      .split(/\n\s*\n/)
+                      .map((block, blockIndex) => {
+                        const lines = block
+                          .split("\n")
+                          .map((line) => line.trim())
+                          .filter(Boolean);
+                        if (!lines.length) return null;
+                        const isNumberedList = lines.every((line) =>
+                          /^\d+[.)]\s+/.test(line),
+                        );
+
+                        if (isNumberedList) {
+                          return (
+                            <ol
+                              key={blockIndex}
+                              className="message-list numbered-list"
+                            >
+                              {lines.map((line, index) => {
+                                const text = line.replace(/^\d+[.)]\s+/, "");
+                                return (
+                                  <li key={index}>{formatMessageText(text)}</li>
+                                );
+                              })}
+                            </ol>
+                          );
+                        }
+
+                        const isBulletList = lines.every((line) =>
+                          /^[-*•]\s+/.test(line),
+                        );
+
+                        if (isBulletList) {
+                          return (
+                            <ul
+                              key={blockIndex}
+                              className="message-list bullet-list"
+                            >
+                              {lines.map((line, index) => {
+                                const text = line.replace(/^[-*•]\s+/, "");
+                                return (
+                                  <li key={index}>{formatMessageText(text)}</li>
+                                );
+                              })}
+                            </ul>
+                          );
+                        }
+
+                        return (
+                          <p key={blockIndex} className="message-paragraph">
+                            {formatMessageText(block)}
+                          </p>
+                        );
+                      })}
                   </div>
+
+                  {/* Copy button only for AI responses */}
+                  {message.role === "assistant" && !message.failed && (
+                    <button
+                      type="button"
+                      className="copy-message-button"
+                      onClick={() => copyMessage(message.content, index)}
+                      aria-label="Copy AI response"
+                    >
+                      {copiedMessageIndex === index ? (
+                        <>
+                          <span className="copy-icon">
+                            <LuCopyCheck />
+                          </span>{" "}
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <span className="copy-icon">
+                            <MdOutlineContentCopy />
+                          </span>{" "}
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               ))
             )}

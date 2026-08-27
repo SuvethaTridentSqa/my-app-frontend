@@ -61,16 +61,16 @@ export default function UrlShortener() {
   };
 
   return (
-    <section className="page-content">
+    <section className="page-content-shortenURL">
       <BackButton />
-      <header className="page-header">
+      <header className="page-header-shortenURL">
         <div>
           <h2>Shorten URL</h2>
           <p>Convert long links into short, shareable URLs.</p>
         </div>
         <UsageBadge count={savedUrls.length} />
       </header>
-      <div className="dashboard-toolbar">
+      <div className="dashboard-toolbar-shortenURL">
         <form className="feature-form" onSubmit={handleSubmit}>
           <label>
             Long URL

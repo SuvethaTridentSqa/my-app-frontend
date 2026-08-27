@@ -25,7 +25,207 @@
   margin: 10px 0 0;
   color: var(--text);
 }
+/* ====================
+ADMIN ACTIVITY
+======================= */
+.page-content-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
+.page-header-admin {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Table container */
+.admin-table-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  width: 100%;
+  max-width: 100%;
+
+  padding: 15px;
+  box-sizing: border-box;
+
+  overflow-x: auto;
+  overflow-y: auto;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fcfbff;
+
+  max-height: 500px;
+}
+
+/* Header + rows */
+.admin-row-admin {
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(180px, 1fr);
+
+  gap: 12px;
+
+  padding: 14px 18px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  min-width: 500px;
+  box-sizing: border-box;
+}
+
+.admin-header-admin {
+  padding: 15px 20px;
+  font-weight: 700;
+  background: #f6f5ff;
+}
+
+/* Prevent long content from breaking the layout */
+.admin-row-admin span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .page-content-admin {
+    gap: 18px;
+  }
+
+  .page-header-admin {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .admin-table-admin {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .admin-row-admin {
+    grid-template-columns:
+      minmax(130px, 1fr)
+      minmax(130px, 1fr)
+      minmax(160px, 1fr);
+
+    padding: 12px 14px;
+    min-width: 450px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .page-content-admin {
+    gap: 16px;
+  }
+
+  .admin-header-admin {
+    padding: 12px;
+  }
+
+  .admin-row-admin {
+    min-width: 400px;
+    gap: 10px;
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .admin-table-admin {
+    padding: 8px;
+  }
+}
+
+/* ====================
+SHORTEN URL
+======================= */
+.page-content-shortenURL {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header-shortenURL {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.dashboard-toolbar-shortenURL {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* ==========================
+ANALYTICS
+========================== */
+.admin-table-analytics {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 630px;
+  height: 420px;
+  padding: 8px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fcfbff;
+}
+
+.admin-header-analytics {
+  padding: 15px 20px;
+  font-weight: 700;
+  background: #f6f5ff;
+}
+
+.admin-row-analytics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.metric-card {
+  /* background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow); */
+  overflow: hidden;
+  border-radius: 4px;
+  height: 55px;
+  width: 400px;
+  margin-left: 15px;
+}
+
+.analytics-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 450px;
+  height: 45px;
+  padding: 5px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fcfbff;
+  height: auto;
+}
 /* =========================
    Feature Layout
 ========================= */
@@ -43,7 +243,6 @@
 }
 
 .feature-card,
-.metric-card,
 .feature-form,
 .feature-form-password,
 .feature-form_2 {
@@ -53,7 +252,6 @@
 }
 
 .feature-card,
-.metric-card,
 .feature-form {
   border-radius: 24px;
   padding: 24px;
@@ -286,7 +484,7 @@
 .analytics-layout {
   display: grid;
   grid-template-columns:
-    minmax(280px, 1fr)
+    minmax(360px, 1.7fr)
     minmax(320px, 1.6fr);
   align-items: start;
   gap: 24px;
@@ -296,19 +494,19 @@
 .analytics-result {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  width: 100%;
+  gap: 4px;
+  width: 70%;
+  /* height: 750px; */
 }
 
 .analytics-table,
-.analytics-summary,
 .admin-table {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 100%;
-  height: 500px;
-  padding: 18px;
+  width: 550px;
+  height: 250px;
+  padding: 15px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -520,13 +718,11 @@
 
   .feature-form-password,
   .feature-form,
-  .feature-card,
-  .metric-card {
+  .feature-card {
     padding: 20px;
   }
 
   .analytics-table,
-  .analytics-summary,
   .admin-table {
     height: auto;
     max-height: 500px;

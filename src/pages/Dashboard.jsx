@@ -1,8 +1,10 @@
+"use client";
+import { useEffect } from "react";
+import { socket } from "../lib/socket";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UsageBadge from "../components/UsageBadge";
 import {
-  HiHome,
   HiScissors,
   HiChartBar,
   HiQrCode,
@@ -54,6 +56,30 @@ const featureCards = [
 ];
 
 export default function Dashboard() {
+  useEffect(() => {
+    socket.connect();
+    const handleConnect = () => {
+      console.log("Connected:", socket.id);
+    };
+    const handleTaskUpdated = (data) => {
+      console.log("Received task update:", data);
+    };
+    socket.on("connect", handleConnect);
+    socket.on("taskUpdated", handleTaskUpdated);
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("taskUpdated", handleTaskUpdated);
+      socket.disconnect();
+    };
+  }, []);
+
+  const completeTask = () => {
+    socket.emit("taskUpdated", {
+      taskId: "123",
+      status: "completed",
+    });
+  };
+
   const [viewMode, setViewMode] = useState("grid");
   const navigate = useNavigate();
   // setviewMode('grid');
@@ -62,9 +88,11 @@ export default function Dashboard() {
       <header className="page-header">
         <div>
           <h2>Dashboard</h2>
+          <button onClick={completeTask}>Complete Task</button>
           <p>Manage your shortened URLs, analytics, and security settings.</p>
         </div>
-        <UsageBadge count={10} />
+        {/* modify - place the respective user/admin count here-in future */}
+        <UsageBadge count={2} />
       </header>
       <div className="dashboard-toolbar">
         {/* <div className="dashboard-toggle">

@@ -16,10 +16,12 @@ export default function Analytics() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [savedUrls, setSavedUrls] = useState([]);
+  const [urllength, setUrlLength] = useState([]);
   const loadUrls = async () => {
     try {
       const response = await getUrls();
       setSavedUrls(response.data);
+      setUrlLength(response.data.length);
     } catch (error) {
       console.error("Failed to load urls", error);
     }
@@ -39,35 +41,12 @@ export default function Analytics() {
     loadDefaultAnalytics();
   }, []);
 
-  const deviceRows = useMemo(
-    () => Object.entries(metrics?.deviceBreakdown || {}),
-    [metrics?.deviceBreakdown],
-  );
-
-  const geographyRows = useMemo(
-    () =>
-      Object.entries(metrics?.geography || {}).map(([location, count]) => [
-        location.replace("unknown:unknown", "Unknown"),
-        count,
-      ]),
-    [metrics?.geography],
-  );
-
-  const timeSeriesRows = useMemo(
-    () =>
-      Object.entries(metrics?.timeSeries || {}).sort(([a], [b]) =>
-        a.localeCompare(b),
-      ),
-    [metrics?.timeSeries],
-  );
-
   const clickHistoryRows = useMemo(
     () =>
       metrics?.events?.map((event) => [
         new Date(event.clickedAt).toLocaleString(),
         event.device,
         event.browser,
-        event.country,
         event.city,
         event.referer,
       ]) ?? [],
@@ -126,7 +105,7 @@ export default function Analytics() {
           <p>Track clicks, devices, and traffic patterns.</p>
         </div>
 
-        <UsageBadge count={8} />
+        <UsageBadge count={urllength} />
       </header>
 
       <form className="analytics-search" onSubmit={handleSearch}>
@@ -137,57 +116,43 @@ export default function Analytics() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="fb2026, http://localhost:5000/u/fb2026 or https://www.facebook.com"
+              placeholder=" https://www.facebook.com"
             />
-
-            <button type="submit" disabled={busy}>
+            <button type="submit" disabled={busy} className="secondary-button">
               {busy ? "Loading..." : "Fetch Analytics"}
             </button>
           </div>
         </label>
       </form>
-
       {message && <div className="message-box warn">{message}</div>}
-
       <div className="analytics-layout">
         <SavedUrlsList savedUrls={savedUrls} onSelectUrl={handleSelectUrl} />
-
         <div className="analytics-result">
           {metrics ? (
             <>
               <MetricsSummary metrics={metrics} savedCount={savedUrls.length} />
-
-              <AnalyticsTableSection
+              {/* <AnalyticsTableSection
                 title="Device Breakdown"
                 headers={["Device", "Clicks"]}
                 rows={deviceRows}
                 emptyText="No device data available."
               />
-
               <AnalyticsTableSection
                 title="Geography Breakdown"
                 headers={["Location", "Clicks"]}
                 rows={geographyRows}
                 emptyText="No geography data available."
               />
-
               <AnalyticsTableSection
                 title="Time Series"
                 headers={["Hour", "Clicks"]}
                 rows={timeSeriesRows}
                 emptyText="No time series data available."
-              />
+              /> */}
 
               <AnalyticsTableSection
                 title="Click History"
-                headers={[
-                  "Time",
-                  "Device",
-                  "Browser",
-                  "Country",
-                  "City",
-                  "Referer",
-                ]}
+                headers={["Time", "Device", "Browser", "City", "Referer"]}
                 rows={clickHistoryRows}
                 emptyText="No clicks recorded yet."
               />

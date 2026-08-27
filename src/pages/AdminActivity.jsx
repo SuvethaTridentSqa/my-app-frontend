@@ -54,9 +54,9 @@ export default function AdminActivity() {
   }
 
   return (
-    <section className="page-content">
+    <section className="page-content-admin">
       <BackButton />
-      <header className="page-header">
+      <header className="page-header-admin">
         <div>
           <h2>Admin Activity</h2>
           <p>Review user activity, logins, and feature usage.</p>
@@ -64,8 +64,8 @@ export default function AdminActivity() {
         <UsageBadge count={activityRecords.length} />
       </header>
       {message && <div className="message-box warn">{message}</div>}
-      <div className="admin-table">
-        <div className="admin-row admin-header">
+      <div className="admin-table-admin">
+        <div className="admin-row-admin admin-header-admin">
           <span>User</span>
           <span>Event</span>
           <span>When</span>
@@ -76,7 +76,7 @@ export default function AdminActivity() {
           <div className="message-box">No activity found.</div>
         ) : (
           activityRecords.map((record) => (
-            <div key={record._id} className="admin-row">
+            <div key={record._id} className="admin-row-admin">
               <span>{formatUserName(record.user?.name || record.user)}</span>
               <span>{formatAction(record.action)}</span>
               <span>{new Date(record.createdAt).toLocaleString()}</span>

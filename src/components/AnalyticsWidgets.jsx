@@ -48,21 +48,17 @@ export function AnalyticsTableSection({ title, headers, rows, emptyText }) {
 
 export function SavedUrlsList({ savedUrls = [], onSelectUrl }) {
   return (
-    <div className="admin-table">
-      <div className="admin-row admin-header">
+    <div className="admin-table-analytics">
+      <div className="admin-row-analytics admin-header-analytics">
         <span>Slug</span>
-
         <span>URL</span>
-
         <span>Action</span>
       </div>
 
       {savedUrls.map((item) => (
-        <div className="admin-row" key={item._id}>
+        <div className="admin-row-analytics" key={item._id}>
           <span>{item.slug}</span>
-
           <span className="truncate">{truncateUrl(item.originalUrl)}</span>
-
           <button
             className="secondary-button"
             type="button"
@@ -80,21 +76,16 @@ export function MetricsSummary({ metrics = {}, savedCount }) {
   return (
     <div className="analytics-summary">
       <div className="metric-card">
-        <h3>Total Clicks</h3>
+        <p>Total Clicks</p>
         <p>{metrics.totalClicks ?? 0}</p>
       </div>
 
       {metrics.originalUrl && (
         <div className="metric-card">
-          <h3>Original URL</h3>
+          <p>Original URL</p>
           <p>{metrics.originalUrl}</p>
         </div>
       )}
-
-      <div className="metric-card">
-        <h3>Saved URLs</h3>
-        <p>{savedCount}</p>
-      </div>
     </div>
   );
 }

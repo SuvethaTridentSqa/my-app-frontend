@@ -19,9 +19,11 @@ export default function AdminLogin() {
     async function loadCaptcha() {
       try {
         const response = await fetchCaptcha();
-        setCaptchaId(response.data.id);
-        setCaptchaExpression(response.data.expression || "Enter captcha");
-      } catch {
+        console.log("CAPTCHA RESPONSE:", response);
+        setCaptchaId(response.id);
+        setCaptchaExpression(response.expression || "Enter captcha");
+      } catch (error) {
+        console.error("CAPTCHA ERROR:", error);
         setCaptchaExpression("Unable to load captcha");
       }
     }
