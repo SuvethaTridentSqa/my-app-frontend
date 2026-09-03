@@ -98,8 +98,8 @@ export default function PasswordProtection() {
               required
             />
           </label>
-          <div className="button-row-password">
-            <button type="submit">
+          <div className="button-row-password-div">
+            <button type="submit" className="primary-button">
               {selectedItem ? "Update protection" : "Protect link"}
             </button>
             {selectedItem && (

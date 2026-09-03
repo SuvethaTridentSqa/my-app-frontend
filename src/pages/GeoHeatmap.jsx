@@ -62,9 +62,6 @@ export default function GeoHeatmap() {
         </div>
         <UsageBadge count={urls.length} />
       </header>
-
-      {/* Select visualization mode */}
-
       <div className="feature-form_2">
         <label>
           Fetch Data From &nbsp; &nbsp;
@@ -82,9 +79,6 @@ export default function GeoHeatmap() {
           </select>
         </label>
       </div>
-
-      {/* Existing URL */}
-
       {sourceType === "existing" && (
         <>
           <div className="feature-form_2">
@@ -125,9 +119,6 @@ export default function GeoHeatmap() {
           </div>
         </>
       )}
-
-      {/* New URL */}
-
       {sourceType === "new" && (
         <div className="visualizer-container">
           <LinkVisualizer />

@@ -59,10 +59,10 @@ export default function Dashboard() {
   useEffect(() => {
     socket.connect();
     const handleConnect = () => {
-      console.log("Connected:", socket.id);
+      // console.log("Connected:", socket.id);
     };
     const handleTaskUpdated = (data) => {
-      console.log("Received task update:", data);
+      // console.log("Received task update:", data);
     };
     socket.on("connect", handleConnect);
     socket.on("taskUpdated", handleTaskUpdated);
@@ -73,12 +73,12 @@ export default function Dashboard() {
     };
   }, []);
 
-  const completeTask = () => {
-    socket.emit("taskUpdated", {
-      taskId: "123",
-      status: "completed",
-    });
-  };
+  // const completeTask = () => {
+  //   socket.emit("taskUpdated", {
+  //     taskId: "123",
+  //     status: "completed",
+  //   });
+  // };
 
   const [viewMode, setViewMode] = useState("grid");
   const navigate = useNavigate();
@@ -88,27 +88,13 @@ export default function Dashboard() {
       <header className="page-header">
         <div>
           <h2>Dashboard</h2>
-          <button onClick={completeTask}>Complete Task</button>
+          {/* <button onClick={completeTask}>Complete Task</button> */}
           <p>Manage your shortened URLs, analytics, and security settings.</p>
         </div>
         {/* modify - place the respective user/admin count here-in future */}
         <UsageBadge count={2} />
       </header>
       <div className="dashboard-toolbar">
-        {/* <div className="dashboard-toggle">
-                    <button
-                        className={viewMode === 'grid' ? 'outline-button active' : 'outline-button'}
-                        onClick={() => setViewMode('grid')}
-                    >
-                        Card view
-                    </button>
-                    <button
-                        className={viewMode === 'list' ? 'outline-button active' : 'outline-button'}
-                        onClick={() => setViewMode('list')}
-                    >
-                        List view
-                    </button>
-                </div> */}
         <div className="dashboard-actions">
           <button className="icon-link" onClick={() => navigate("/login")}>
             <HiUser /> User login
@@ -130,9 +116,6 @@ export default function Dashboard() {
       <div className={`feature-grid ${viewMode}`}>
         {featureCards.map((feature) => (
           <article key={feature.title} className={`feature-card ${viewMode}`}>
-            {/* <div className="feature-card-image" aria-hidden="true">
-              <span>{feature.icon}</span>
-            </div> */}
             <div className="feature-card-body">
               <span className="feature-tag">{feature.label}</span>
               <h3>{feature.title}</h3>

@@ -6,9 +6,14 @@ export const adminLogin = (credentials) =>
   api.post("/auth/admin/login", credentials);
 
 export const fetchCaptcha = async () => {
-  const response = await fetch("http://localhost:5000/api/auth/captcha");
-  if (!response.ok) {
-    throw new Error(`Captcha request failed: ${response.status}`);
+  try {
+    const response = await api.get("/auth/captcha");
+    return response.data;
+  } catch (error) {
+    console.error("[CAPTCHA] Failed to fetch captcha:", error);
+    throw new Error(
+      error?.response?.data?.message ||
+        `Captcha request failed: ${error.response?.status || error.message}`,
+    );
   }
-  return await response.json();
 };

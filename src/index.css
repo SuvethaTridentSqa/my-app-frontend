@@ -11,8 +11,8 @@
   --accent-border: rgba(111, 77, 255, 0.25);
   --shadow: rgba(20, 18, 47, 0.08) 0 16px 40px -24px;
 
-  --sans: Inter, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: Inter, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/1.5 var(--sans);

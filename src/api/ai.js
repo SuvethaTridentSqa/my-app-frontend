@@ -24,3 +24,7 @@ export const sendChatMessage = ({
     assistantResponse,
     assistantStatus,
   });
+
+export const deleteChatConversation = async (conversationId) => {
+  return await api.delete(`/ai/conversations/${conversationId}`);
+};

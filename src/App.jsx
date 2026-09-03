@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { socket } from "./lib/socket";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import UrlShortener from "./pages/UrlShortener";
@@ -13,19 +15,40 @@ import AdminLogin from "./pages/AdminLogin";
 import LinkVisualizer from "./pages/LinkVisualizer";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "./pages/ProtectedRoutes";
-import ChatPage from "./pages/Chat";
 import "./ai/transformersConfig";
 import "./App.css";
-// import AITest from "./ai/AITest";
 
 function App() {
+  useEffect(() => {
+    const handleConnect = () => {
+      console.log("Socket connected:", socket.id);
+    };
+    const handleDisconnect = (reason) => {
+      console.log("Socket disconnected:", socket.id, "Reason:", reason);
+    };
+    const handleConnectError = (error) => {
+      console.error("Socket connection error:", error.message);
+    };
+    const handleTaskUpdated = (data) => {
+      console.log("Task updated:", data);
+    };
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("taskUpdated", handleTaskUpdated);
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("taskUpdated", handleTaskUpdated);
+    };
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin-login" element={<AdminLogin />} />
-      <Route path="/dashboard/chat" element={<Chat />} />
-      {/* <Route path="/dashboard/ai-test" element={<AITest />} /> */}
       <Route
         path="/dashboard"
         element={
