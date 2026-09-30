@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { loadLocalModel } from "../ai/localModel.js";
 import { generateEmbedding, loadEmbeddingModel } from "../ai/embeddingModel.js";
-import { MdOutlineContentCopy } from "react-icons/md";
+import { MdOutlineContentCopy, MdDeleteOutline } from "react-icons/md";
 import { LuCopyCheck } from "react-icons/lu";
 import BackButton from "../components/BackButton";
 import UsageBadge from "../components/UsageBadge";
@@ -14,22 +14,24 @@ import {
   sendChatMessage,
   deleteChatConversation,
 } from "../api/ai.js";
-import { MdDeleteOutline } from "react-icons/md";
-import { searchRAG } from "../api/rag.js";
+import { searchRAG, listRagDocuments, deleteRagDocument } from "../api/rag.js";
+import UploadDocument from "../components/UploadDocument";
 
-const extractAssistantText = (output) => {
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_{2}(.*?)_{2}/g, "$1")
+    .trim();
+}
+
+function extractAssistantText(output) {
   if (Array.isArray(output) && output.length > 0) {
     const first = output[0];
     if (first?.generated_text) {
       const generated = first.generated_text;
       if (Array.isArray(generated)) {
         const lastMessage = generated[generated.length - 1];
-        if (
-          lastMessage?.role === "assistant" &&
-          typeof lastMessage.content === "string"
-        ) {
-          return lastMessage.content.trim();
-        }
         if (typeof lastMessage?.content === "string") {
           return lastMessage.content.trim();
         }
@@ -50,12 +52,12 @@ const extractAssistantText = (output) => {
     }
   }
   return "";
-};
+}
 
 export default function Chat() {
-  // console.log("[CHAT] Chat component mounted/rendered");
   const navigate = useNavigate();
   const { auth, loading: authLoading } = useAuth();
+
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -70,37 +72,35 @@ export default function Chat() {
   const [deleteConversationTarget, setDeleteConversationTarget] =
     useState(null);
   const [deletingConversation, setDeletingConversation] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [activeDocumentId, setActiveDocumentId] = useState("");
+
   const generatorRef = useRef(null);
   const hasLoadedConversationsRef = useRef(false);
+
+  const loadDocuments = useCallback(async () => {
+    try {
+      const response = await listRagDocuments();
+      setDocuments(response?.data || []);
+    } catch (err) {
+      console.error("[CHAT] Failed to load documents:", err);
+    }
+  }, []);
+
   const loadConversations = useCallback(async () => {
     try {
-      // console.log("[CHAT] getChatConversations() starting...");
       setError("");
       const response = await getChatConversations();
-      // console.log("[CHAT] getChatConversations() response:", response);
       let list =
         response?.data?.conversations ||
         response?.conversations ||
         response?.data?.data ||
         (Array.isArray(response?.data) ? response.data : []);
-      if (!Array.isArray(list)) {
-        console.warn(
-          "[CHAT] Conversations is not an array, got:",
-          typeof list,
-          list,
-        );
-        list = [];
-      }
+      if (!Array.isArray(list)) list = [];
       setConversations(list);
     } catch (err) {
       console.error("[CHAT] Conversation loading failed:", err);
-      console.error("[CHAT] Error details:", {
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-      });
       if (err?.response?.status === 401) {
-        console.warn("[CHAT] Session expired, redirecting to login");
         setError("Your session is no longer valid. Please log in again.");
         setTimeout(() => {
           navigate("/login", { replace: true, state: { expired: true } });
@@ -112,23 +112,16 @@ export default function Chat() {
   }, [navigate]);
 
   const loadConversation = useCallback(async (conversationId) => {
-    if (!conversationId) {
-      return;
-    }
+    if (!conversationId) return;
     try {
       setError("");
       const response = await getConversation(conversationId);
-      // console.log("[CHAT] getConversation response:", response);
       let conversation =
         response?.data?.conversation ||
         response?.conversation ||
         response?.data?.data ||
         response?.data;
       if (!conversation || typeof conversation !== "object") {
-        console.error(
-          "[CHAT] Invalid conversation response structure:",
-          JSON.stringify(response, null, 2),
-        );
         throw new Error("Conversation was not returned.");
       }
       setSelectedConversation(conversation);
@@ -139,11 +132,6 @@ export default function Chat() {
       setRagSources([]);
     } catch (err) {
       console.error("[CHAT] Conversation loading failed:", err);
-      console.error("[CHAT] Error details:", {
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-      });
       if (err?.response?.status === 401) {
         setError("Your session is no longer valid. Please log in again.");
         return;
@@ -153,26 +141,17 @@ export default function Chat() {
   }, []);
 
   const handleNewChat = useCallback(async () => {
-    if (loading || deletingConversation) {
-      return;
-    }
+    if (loading || deletingConversation) return;
     try {
       setError("");
       const response = await createChatConversation("New Chat");
-      // console.log("[CHAT] createChatConversation response:", response);
       let conversation =
         response?.data?.conversation ||
         response?.conversation ||
         response?.data?.data ||
         response?.data;
       if (!conversation || typeof conversation !== "object") {
-        console.error(
-          "[CHAT] Invalid response structure:",
-          JSON.stringify(response, null, 2),
-        );
-        throw new Error(
-          "Conversation was not created. Backend returned invalid response structure.",
-        );
+        throw new Error("Conversation was not created.");
       }
       setSelectedConversation(conversation);
       setMessages([]);
@@ -183,11 +162,6 @@ export default function Chat() {
       await loadConversations();
     } catch (err) {
       console.error("[CHAT] New chat creation failed:", err);
-      console.error("[CHAT] Error details:", {
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-      });
       if (err?.response?.status === 401) {
         setError("Your session is no longer valid. Please log in again.");
         return;
@@ -197,9 +171,7 @@ export default function Chat() {
   }, [loading, deletingConversation, loadConversations]);
 
   const conversationHistory = useMemo(() => {
-    if (!messages.length) {
-      return [];
-    }
+    if (!messages.length) return [];
     return messages.slice(-4).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: String(message.content || "").slice(0, 1000),
@@ -218,9 +190,8 @@ export default function Chat() {
         setError("Please create a new chat first.");
         return;
       }
-      if (loading) {
-        return;
-      }
+      if (loading) return;
+
       const conversationId = selectedConversation._id;
       setLoading(true);
       setError("");
@@ -233,51 +204,44 @@ export default function Chat() {
       }, 1000);
       setMessages((prev) => [
         ...prev,
-        {
-          role: "user",
-          content: text,
-          status: "completed",
-        },
+        { role: "user", content: text, status: "completed" },
       ]);
       setPrompt("");
+
       try {
-        // console.log("[CHAT] Saving pending message...");
         await sendChatMessage({
           prompt: text,
           conversationId,
           assistantResponse: "AI response pending...",
           assistantStatus: "pending",
         });
-        // console.log("[CHAT] Pending message saved.");
+
         if (!generatorRef.current) {
           setLoadingStage("Loading local AI model...");
-          // console.log("[AI] Loading local AI model...");
           const generator = await loadLocalModel();
-          if (!generator) {
-            throw new Error("Local AI model failed to load.");
-          }
+          if (!generator) throw new Error("Local AI model failed to load.");
           generatorRef.current = generator;
-          // console.log("[AI] Local AI model loaded.");
         }
+
         setLoadingStage("Loading document search model...");
-        // console.log("[RAG] Loading embedding model...");
         await loadEmbeddingModel();
-        // console.log("[RAG] Embedding model ready.");
+
         setLoadingStage("Searching your documents...");
-        // console.log("[RAG] Generating query embedding...");
         const queryEmbedding = await generateEmbedding(text);
         if (!Array.isArray(queryEmbedding) || queryEmbedding.length === 0) {
           throw new Error("Query embedding was not generated.");
         }
-        // console.log("[RAG] Query embedding generated.", {
-        //   dimensions: queryEmbedding.length,
-        // });
-        // console.log("[RAG] Searching vector database...");
-        const ragResponse = await searchRAG(text, 3, queryEmbedding);
-        const retrievedChunks = Array.isArray(ragResponse?.results)
-          ? ragResponse.results
+
+        const ragResponse = await searchRAG(
+          text,
+          3,
+          queryEmbedding,
+          activeDocumentId || undefined,
+        );
+        const retrievedChunks = Array.isArray(ragResponse?.data)
+          ? ragResponse.data
           : [];
-        // console.log("[RAG] Retrieved chunks:", retrievedChunks.length);
+
         const sources = retrievedChunks.map((chunk, index) => ({
           id: chunk._id || `${index}`,
           fileName:
@@ -289,6 +253,7 @@ export default function Chat() {
           text: chunk.text || "",
         }));
         setRagSources(sources);
+
         let ragContext =
           "No relevant information was found in the user's documents.";
         if (retrievedChunks.length > 0) {
@@ -303,88 +268,60 @@ export default function Chat() {
 SOURCE ${index + 1}
 DOCUMENT: ${sourceName}
 ${page ? `PAGE: ${page}` : ""}
-${chunk.text || ""}
+${stripMarkdown(chunk.text || "")}
 `;
             })
             .join("\n\n");
         }
+
         const generator = generatorRef.current;
-        if (!generator) {
-          throw new Error("Local AI model is not ready.");
-        }
+        if (!generator) throw new Error("Local AI model is not ready.");
+
         setLoadingStage("Generating response...");
-        const systemPrompt = `
-You are a helpful AI assistant.
-You are running locally in the user's browser.
-You have access to retrieved information from
-the user's documents.
-IMPORTANT RULES:
-1. Use the retrieved context when it is relevant
-   to the user's question.
-2. Do not invent facts that are not supported
-   by the retrieved context.
-3. If the user's question is about the uploaded
-   documents and the answer cannot be found in
-   the retrieved context, clearly say that the
-   information was not found in the documents.
-4. Do not pretend that you have real-time
-   internet access.
-5. Do not claim to know the current time unless
-   the application provides the current time
-   explicitly.
-6. Do not make up dates, events, people,
-   documents, or facts.
-7. Answer clearly and concisely.
-8. When retrieved context is available, prefer
-   that information over your general knowledge.
----------------------------------------
-RETRIEVED DOCUMENT CONTEXT
----------------------------------------
+        const userTurnWithContext = `Use the text below to answer the question. If the text does not contain the answer, reply exactly: I don't see that in the document.
+
+TEXT:
 ${ragContext}
----------------------------------------
-END RETRIEVED CONTEXT
----------------------------------------
-`;
+
+QUESTION: ${text}`;
+
         const modelMessages = [
           {
-            role: "system",
-            content: systemPrompt,
-          },
-          ...conversationHistory,
-          {
             role: "user",
-            content: text,
+            content: userTurnWithContext,
           },
         ];
-        // console.log("[AI] Generating response...");
+
+        console.log(
+          "[AI] Messages sent to model:",
+          JSON.stringify(modelMessages, null, 2),
+        );
+
         const output = await generator(modelMessages, {
-          max_new_tokens: 1200,
+          max_new_tokens: 300,
           do_sample: false,
         });
-        // console.log("[AI] Raw model output:", output);
+        console.log("[AI] Raw model output:", JSON.stringify(output, null, 2));
+
         let assistantText = extractAssistantText(output);
-        assistantText = assistantText.trim();
-        assistantText = assistantText.replace(/^assistant\s*:?\s*/i, "").trim();
-        if (!assistantText) {
-          throw new Error("AI returned an empty response.");
-        }
-        //        console.log("[AI] Final assistant response:", assistantText);
+        assistantText = assistantText
+          .trim()
+          .replace(/^assistant\s*:?\s*/i, "")
+          .trim();
+        if (!assistantText) throw new Error("AI returned an empty response.");
+
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: assistantText,
-            status: "completed",
-          },
+          { role: "assistant", content: assistantText, status: "completed" },
         ]);
-        //console.log("[CHAT] Saving successful response...");
+
         await sendChatMessage({
           prompt: text,
           conversationId,
           assistantResponse: assistantText,
           assistantStatus: "completed",
         });
-        // console.log("[CHAT] Response saved.");
+
         await loadConversation(conversationId);
         await loadConversations();
       } catch (err) {
@@ -428,7 +365,7 @@ END RETRIEVED CONTEXT
       selectedConversation,
       prompt,
       loading,
-      conversationHistory,
+      activeDocumentId,
       loadConversation,
       loadConversations,
     ],
@@ -438,78 +375,33 @@ END RETRIEVED CONTEXT
     try {
       await navigator.clipboard.writeText(content);
       setCopiedMessageIndex(index);
-      setTimeout(() => {
-        setCopiedMessageIndex(null);
-      }, 1500);
+      setTimeout(() => setCopiedMessageIndex(null), 1500);
     } catch (err) {
       console.error("[CHAT] Failed to copy message:", err);
     }
   };
-  useEffect(() => {
-    if (authLoading) {
-      // console.log("[CHAT] Waiting for auth to load...");
+
+  const handleDeleteDocument = useCallback(async () => {
+    if (!activeDocumentId) {
+      setError("Select a document from the dropdown first.");
       return;
     }
-    if (!auth?.isAuthenticated || !auth?.token) {
-      console.warn("[CHAT] User not authenticated, skipping conversation load");
-      hasLoadedConversationsRef.current = false;
-      return;
+    const docToDelete = documents.find((d) => d._id === activeDocumentId);
+    const confirmed = window.confirm(
+      `Delete "${docToDelete?.title || "this document"}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    try {
+      await deleteRagDocument(activeDocumentId);
+      setActiveDocumentId("");
+      await loadDocuments();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to delete document.");
     }
-    if (hasLoadedConversationsRef.current) {
-      // console.log(
-      //   "[CHAT] Conversations already loaded in this mount, skipping",
-      // );
-      return;
-    }
-    // console.log("[CHAT] Auth ready, loading conversations for first time...");
-    hasLoadedConversationsRef.current = true;
-    loadConversations();
-  }, [authLoading, auth?.isAuthenticated, auth?.token]);
-
-  useEffect(() => {
-    if (!auth?.isAuthenticated) {
-      hasLoadedConversationsRef.current = false;
-    }
-  }, [auth?.isAuthenticated]);
-
-  useEffect(() => {
-    const handleUnauthorized = (event) => {
-      console.warn(
-        "[CHAT] Received auth:unauthorized event, redirecting to login",
-      );
-      setError("Your session has expired. Please log in again.");
-      setTimeout(() => {
-        navigate("/login", { replace: true, state: { expired: true } });
-      }, 1000);
-    };
-
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () => {
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
-    };
-  }, [navigate]);
-
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      event.currentTarget.form?.requestSubmit();
-    }
-  };
-
-  const formatMessageText = (text) => {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, index) => {
-      if (/^\*\*[^*]+\*\*$/.test(part)) {
-        return <strong key={index}>{part.replace(/^\*\*|\*\*$/g, "")}</strong>;
-      }
-      return <span key={index}>{part}</span>;
-    });
-  };
+  }, [activeDocumentId, documents, loadDocuments]);
 
   const handleDeleteConversation = useCallback(async () => {
-    if (!deleteConversationTarget?._id) {
-      return;
-    }
+    if (!deleteConversationTarget?._id) return;
     try {
       setDeletingConversation(true);
       setError("");
@@ -533,6 +425,59 @@ END RETRIEVED CONTEXT
       setDeletingConversation(false);
     }
   }, [deleteConversationTarget, selectedConversation, loadConversations]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!auth?.isAuthenticated || !auth?.token) {
+      hasLoadedConversationsRef.current = false;
+      return;
+    }
+    if (hasLoadedConversationsRef.current) return;
+    hasLoadedConversationsRef.current = true;
+    loadConversations();
+    loadDocuments();
+  }, [
+    authLoading,
+    auth?.isAuthenticated,
+    auth?.token,
+    loadConversations,
+    loadDocuments,
+  ]);
+
+  useEffect(() => {
+    if (!auth?.isAuthenticated) {
+      hasLoadedConversationsRef.current = false;
+    }
+  }, [auth?.isAuthenticated]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setError("Your session has expired. Please log in again.");
+      setTimeout(() => {
+        navigate("/login", { replace: true, state: { expired: true } });
+      }, 1000);
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () =>
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, [navigate]);
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
+
+  const formatMessageText = (text) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, index) => {
+      if (/^\*\*[^*]+\*\*$/.test(part)) {
+        return <strong key={index}>{part.replace(/^\*\*|\*\*$/g, "")}</strong>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
   return (
     <section className="page-content chat-page">
@@ -563,30 +508,21 @@ END RETRIEVED CONTEXT
             ) : (
               conversations.map((conversation) => {
                 const hasFailedMessage = conversation.messages?.some(
-                  (message) => message.status === "failed",
+                  (m) => m.status === "failed",
                 );
                 return (
                   <div
                     key={conversation._id}
-                    className={`chat-list-item-wrapper ${
-                      selectedConversation?._id === conversation._id
-                        ? "active"
-                        : ""
-                    }`}
+                    className={`chat-list-item-wrapper ${selectedConversation?._id === conversation._id ? "active" : ""}`}
                   >
                     <button
                       type="button"
-                      className={`chat-list-item ${
-                        selectedConversation?._id === conversation._id
-                          ? "active"
-                          : ""
-                      }`}
+                      className={`chat-list-item ${selectedConversation?._id === conversation._id ? "active" : ""}`}
                       onClick={() => loadConversation(conversation._id)}
                       disabled={loading || deletingConversation}
                     >
                       <span>
                         {conversation.title || "Untitled Chat"}
-
                         {hasFailedMessage && (
                           <span
                             style={{
@@ -600,14 +536,12 @@ END RETRIEVED CONTEXT
                           </span>
                         )}
                       </span>
-
                       <small>
                         {conversation.updatedAt
                           ? new Date(conversation.updatedAt).toLocaleString()
                           : ""}
                       </small>
                     </button>
-
                     <button
                       type="button"
                       className="delete-chat-button"
@@ -616,7 +550,6 @@ END RETRIEVED CONTEXT
                       disabled={loading || deletingConversation}
                       onClick={(event) => {
                         event.stopPropagation();
-
                         setDeleteConversationTarget(conversation);
                       }}
                     >
@@ -628,6 +561,7 @@ END RETRIEVED CONTEXT
             )}
           </div>
         </aside>
+
         <main className="chat-main">
           <div className="chat-main-header">
             <h3>{conversationTitle}</h3>
@@ -641,9 +575,7 @@ END RETRIEVED CONTEXT
               messages.map((message, index) => (
                 <div
                   key={`msg-${selectedConversation?._id}-${index}`}
-                  className={`chat-message ${
-                    message.role === "assistant" ? "assistant" : "user"
-                  } ${message.status === "failed" ? "failed" : ""}`}
+                  className={`chat-message ${message.role === "assistant" ? "assistant" : "user"} ${message.status === "failed" ? "failed" : ""}`}
                 >
                   <div className="message-role">
                     {message.status === "failed" ? "AI Failed" : message.role}
@@ -654,13 +586,11 @@ END RETRIEVED CONTEXT
                       .map((block, blockIndex) => {
                         const lines = block
                           .split("\n")
-                          .map((line) => line.trim())
+                          .map((l) => l.trim())
                           .filter(Boolean);
-                        if (!lines.length) {
-                          return null;
-                        }
-                        const isNumberedList = lines.every((line) =>
-                          /^\d+[.)]\s+/.test(line),
+                        if (!lines.length) return null;
+                        const isNumberedList = lines.every((l) =>
+                          /^\d+[.)]\s+/.test(l),
                         );
                         if (isNumberedList) {
                           return (
@@ -668,19 +598,18 @@ END RETRIEVED CONTEXT
                               key={blockIndex}
                               className="message-list numbered-list"
                             >
-                              {lines.map((line, itemIndex) => {
-                                const text = line.replace(/^\d+[.)]\s+/, "");
-                                return (
-                                  <li key={itemIndex}>
-                                    {formatMessageText(text)}
-                                  </li>
-                                );
-                              })}
+                              {lines.map((line, i) => (
+                                <li key={i}>
+                                  {formatMessageText(
+                                    line.replace(/^\d+[.)]\s+/, ""),
+                                  )}
+                                </li>
+                              ))}
                             </ol>
                           );
                         }
-                        const isBulletList = lines.every((line) =>
-                          /^[-*•]\s+/.test(line),
+                        const isBulletList = lines.every((l) =>
+                          /^[-*•]\s+/.test(l),
                         );
                         if (isBulletList) {
                           return (
@@ -688,14 +617,13 @@ END RETRIEVED CONTEXT
                               key={blockIndex}
                               className="message-list bullet-list"
                             >
-                              {lines.map((line, itemIndex) => {
-                                const text = line.replace(/^[-*•]\s+/, "");
-                                return (
-                                  <li key={itemIndex}>
-                                    {formatMessageText(text)}
-                                  </li>
-                                );
-                              })}
+                              {lines.map((line, i) => (
+                                <li key={i}>
+                                  {formatMessageText(
+                                    line.replace(/^[-*•]\s+/, ""),
+                                  )}
+                                </li>
+                              ))}
                             </ul>
                           );
                         }
@@ -706,7 +634,6 @@ END RETRIEVED CONTEXT
                         );
                       })}
                   </div>
-
                   {message.role === "assistant" && !message.failed && (
                     <button
                       type="button"
@@ -735,6 +662,7 @@ END RETRIEVED CONTEXT
               ))
             )}
           </div>
+
           {ragSources.length > 0 && (
             <div className="rag-sources">
               <strong>Sources</strong>
@@ -757,6 +685,7 @@ END RETRIEVED CONTEXT
               </div>
             </div>
           )}
+
           {error && <div className="message-box warn">{error}</div>}
           {loading && (
             <div className="message-box">
@@ -767,12 +696,44 @@ END RETRIEVED CONTEXT
               Elapsed time: {elapsedSeconds}s
             </div>
           )}
+
+          <div className="rag-document-picker">
+            <label htmlFor="doc-picker">Ask about:</label>
+            <select
+              id="doc-picker"
+              value={activeDocumentId}
+              onChange={(e) => setActiveDocumentId(e.target.value)}
+            >
+              <option value="">All documents (may mix results)</option>
+              {documents.map((doc) => (
+                <option key={doc._id} value={doc._id}>
+                  {doc.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleDeleteDocument}
+              disabled={!activeDocumentId}
+              title="Delete selected document"
+            >
+              🗑 Delete
+            </button>
+          </div>
+
+          <UploadDocument
+            onUploaded={async (uploadedDocument) => {
+              await loadDocuments();
+              if (uploadedDocument?._id)
+                setActiveDocumentId(uploadedDocument._id);
+            }}
+          />
+
           <form className="chat-form" onSubmit={handlePromptSubmit}>
             <textarea
               value={prompt}
-              onChange={(event) => {
-                setPrompt(event.target.value.slice(0, 2000));
-              }}
+              onChange={(event) => setPrompt(event.target.value.slice(0, 2000))}
               placeholder="Type your Questions here..."
               rows={3}
               disabled={loading}
@@ -789,18 +750,17 @@ END RETRIEVED CONTEXT
           </form>
         </main>
       </div>
+
       {deleteConversationTarget && (
         <div
           className="delete-modal-overlay"
-          onClick={() => {
-            if (!deletingConversation) {
-              setDeleteConversationTarget(null);
-            }
-          }}
+          onClick={() =>
+            !deletingConversation && setDeleteConversationTarget(null)
+          }
         >
           <div
             className="delete-modal"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-chat-title"
