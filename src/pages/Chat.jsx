@@ -12,7 +12,16 @@ import {
   createChatConversation,
   sendChatMessage,
 } from "../api/ai.js";
-import { searchRAG } from "../api/rag.js";
+import UploadDocument from "../components/UploadDocument";
+import { searchRAG, listRagDocuments, deleteRagDocument } from "../api/rag.js";
+
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_{2}(.*?)_{2}/g, "$1")
+    .trim();
+}
 
 export default function Chat() {
   const [conversations, setConversations] = useState([]);
@@ -27,12 +36,24 @@ export default function Chat() {
   const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
   const navigate = useNavigate();
   const generatorRef = useRef(null);
+  const [documents, setDocuments] = useState([]);
+  const [activeDocumentId, setActiveDocumentId] = useState("");
+
+  const loadDocuments = useCallback(async () => {
+    try {
+      const response = await listRagDocuments();
+      setDocuments(response?.data || []);
+    } catch (err) {
+      console.error("[CHAT] Failed to load documents:", err);
+    }
+  }, []);
   // LOAD ALL CONVERSATIONS
   const loadConversations = useCallback(async () => {
     try {
       setError("");
       const response = await getChatConversations();
-      const list = response?.data?.conversations || [];
+      // const list = response?.data?.conversations || [];
+      const list = response?.data?.data || [];
       // console.log("[CHAT] Loaded conversations:", list);
       setConversations(list);
     } catch (err) {
@@ -46,7 +67,8 @@ export default function Chat() {
     try {
       setError("");
       const response = await getConversation(conversationId);
-      const conversation = response?.data?.conversation;
+      // const conversation = response?.data?.conversation;
+      const conversation = response?.data?.data;
       if (!conversation) {
         throw new Error("Conversation was not returned.");
       }
@@ -65,7 +87,8 @@ export default function Chat() {
     try {
       setError("");
       const response = await createChatConversation("New Chat");
-      const conversation = response?.data?.conversation;
+      // const conversation = response?.data?.conversation;
+      const conversation = response?.data?.data;
       if (!conversation) {
         throw new Error("Conversation was not created.");
       }
@@ -176,9 +199,13 @@ export default function Chat() {
         // console.log("[RAG] Query embedding generated.", {
         //   dimensions: queryEmbedding.length,
         // });
-        // console.log("[RAG] Searching vector database...");
-        const ragResponse = await searchRAG(text, 3, queryEmbedding);
-        const retrievedChunks = ragResponse?.results || [];
+        const ragResponse = await searchRAG(
+          text,
+          3,
+          queryEmbedding,
+          activeDocumentId || undefined,
+        );
+        const retrievedChunks = ragResponse?.data || [];
         // console.log("[RAG] Retrieved chunks:", retrievedChunks);
         const sources = retrievedChunks.map((chunk, index) => ({
           id: chunk._id || `${index}`,
@@ -203,7 +230,7 @@ export default function Chat() {
 SOURCE ${index + 1}
 DOCUMENT: ${sourceName}
 ${page ? `PAGE: ${page}` : ""}
-${chunk.text || ""}
+${stripMarkdown(chunk.text || "")}
 `;
             })
             .join("\n\n");
@@ -211,64 +238,32 @@ ${chunk.text || ""}
         // console.log("[RAG] CONTEXT SENT TO GRANITE:");
         // console.log(ragContext);
         console.log("[AI] Loading local AI model...");
-        // const generator = await loadLocalModel(); //temporarily commended this
         const generator = generatorRef.current;
         if (!generator) {
           throw new Error("Local AI model is not ready.");
         }
-        // console.log("[AI] Local AI model loaded.");
-        // console.log("[CHAT] Conversation history:", conversationHistory);
-        const systemPrompt = `
-You are a helpful AI assistant.
-You are running locally in the user's browser.
-You have access to retrieved information from
-the user's documents.
-IMPORTANT RULES:
-1. Use the retrieved context when it is relevant
-  to the user's question.
-2. Do not invent facts that are not supported
-  by the retrieved context.
-3. If the user's question is about the uploaded
-   documents and the answer cannot be found in
-   the retrieved context, clearly say that the
-   information was not found in the documents.
-4. Do not pretend that you have real-time
-   internet access.
-5. Do not claim to know the current time unless
-   the application provides the current time
-   explicitly.
-6. Do not make up dates, events, people,
-   documents, or facts.
-7. Answer clearly and concisely.
-8. When retrieved context is available, prefer
-   that information over your general knowledge.
----------------------------------------
-RETRIEVED DOCUMENT CONTEXT
----------------------------------------
+        const userTurnWithContext = `Use the text below to answer the question. If the text does not contain the answer, reply exactly: I don't see that in the document.
+TEXT:
 ${ragContext}
----------------------------------------
-END RETRIEVED CONTEXT
----------------------------------------
-`;
-        // console.log("[AI] System prompt created.");
+QUESTION: ${text}`;
         const modelMessages = [
           {
-            role: "system",
-            content: systemPrompt,
-          },
-          ...conversationHistory,
-          {
             role: "user",
-            content: text,
+            content: userTurnWithContext,
           },
         ];
+        console.log(
+          "[AI] Messages sent to model:",
+          JSON.stringify(modelMessages, null, 2),
+        );
+        // console.log("[AI] Loading local AI model...");
         // console.log("[AI] Messages sent to model:", modelMessages);
         // console.log("[AI] Generating response...");
         const output = await generator(modelMessages, {
           max_new_tokens: 1200,
           do_sample: false,
         });
-        // console.log("[AI] Raw model output:", output);
+        console.log("[AI] Raw model output:", JSON.stringify(output, null, 2));
         let assistantText = extractAssistantText(output);
         assistantText = assistantText.trim();
         if (assistantText.startsWith("assistant")) {
@@ -346,43 +341,10 @@ END RETRIEVED CONTEXT
     ],
   );
 
-  const benchmarkLocalModel = async () => {
-    const generator = await loadLocalModel();
-    const messages = [
-      {
-        role: "user",
-        content: "Explain quantum computing in three short sentences.",
-      },
-    ];
-    await generator(messages, {
-      max_new_tokens: 1000,
-      do_sample: false,
-    });
-    const results = [];
-    for (let i = 1; i <= 5; i++) {
-      const start = performance.now();
-      const output = await generator(messages, {
-        max_new_tokens: 100,
-        do_sample: false,
-      });
-      const end = performance.now();
-      const seconds = (end - start) / 1000;
-      // console.log(`Run ${i}: ${seconds.toFixed(3)}s`);
-      results.push(seconds);
-    }
-    const average = results.reduce((a, b) => a + b, 0) / results.length;
-    // console.log(`Average: ${average.toFixed(3)}s`);
-    return {
-      runs: results,
-      average,
-    };
-  };
-
   const copyMessage = async (content, index) => {
     try {
       await navigator.clipboard.writeText(content);
       setCopiedMessageIndex(index);
-
       setTimeout(() => {
         setCopiedMessageIndex(null);
       }, 1500);
@@ -391,9 +353,29 @@ END RETRIEVED CONTEXT
     }
   };
 
+  const handleDeleteDocument = useCallback(async () => {
+    if (!activeDocumentId) {
+      setError("Select a document from the dropdown first.");
+      return;
+    }
+    const docToDelete = documents.find((d) => d._id === activeDocumentId);
+    const confirmed = window.confirm(
+      `Delete "${docToDelete?.title || "this document"}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    try {
+      await deleteRagDocument(activeDocumentId);
+      setActiveDocumentId("");
+      await loadDocuments();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to delete document.");
+    }
+  }, [activeDocumentId, documents, loadDocuments]);
+
   useEffect(() => {
     loadConversations();
-  }, [loadConversations]);
+    loadDocuments();
+  }, [loadConversations, loadDocuments]);
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -503,58 +485,6 @@ END RETRIEVED CONTEXT
                   <div className="message-role">
                     {message.status === "failed" ? " AI Failed" : message.role}
                   </div>
-                  {/* <div className="message-content">
-                    {message.content
-                      .split(/\n\s*\n/)
-                      .map((block, blockIndex) => {
-                        const lines = block
-                          .split("\n")
-                          .map((line) => line.trim())
-                          .filter(Boolean);
-                        if (!lines.length) return null;
-                        const isNumberedList = lines.every((line) =>
-                          /^\d+[.)]\s+/.test(line),
-                        );
-                        if (isNumberedList) {
-                          return (
-                            <ol
-                              key={blockIndex}
-                              className="message-list numbered-list"
-                            >
-                              {lines.map((line, index) => {
-                                const text = line.replace(/^\d+[.)]\s+/, "");
-                                return (
-                                  <li key={index}>{formatMessageText(text)}</li>
-                                );
-                              })}
-                            </ol>
-                          );
-                        }
-                        const isBulletList = lines.every((line) =>
-                          /^[-*•]\s+/.test(line),
-                        );
-                        if (isBulletList) {
-                          return (
-                            <ul
-                              key={blockIndex}
-                              className="message-list bullet-list"
-                            >
-                              {lines.map((line, index) => {
-                                const text = line.replace(/^[-*•]\s+/, "");
-                                return (
-                                  <li key={index}>{formatMessageText(text)}</li>
-                                );
-                              })}
-                            </ul>
-                          );
-                        }
-                        return (
-                          <p key={blockIndex} className="message-paragraph">
-                            {formatMessageText(block)}
-                          </p>
-                        );
-                      })}
-                  </div> */}
                   <div className="message-content">
                     {message.content
                       .split(/\n\s*\n/)
@@ -674,6 +604,39 @@ END RETRIEVED CONTEXT
               Searching documents and generating the answer...
             </div>
           )}
+          <div className="rag-document-picker">
+            <label htmlFor="doc-picker">Ask about:</label>
+            <select
+              id="doc-picker"
+              value={activeDocumentId}
+              onChange={(e) => setActiveDocumentId(e.target.value)}
+            >
+              <option value="">All documents (may mix results)</option>
+              {documents.map((doc) => (
+                <option key={doc._id} value={doc._id}>
+                  {doc.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleDeleteDocument}
+              disabled={!activeDocumentId}
+              title="Delete selected document"
+            >
+              X Delete
+            </button>
+          </div>
+
+          <UploadDocument
+            onUploaded={async (uploadedDocument) => {
+              await loadDocuments();
+              if (uploadedDocument?._id) {
+                setActiveDocumentId(uploadedDocument._id);
+              }
+            }}
+          />
           <form className="chat-form" onSubmit={handlePromptSubmit}>
             <textarea
               value={prompt}
