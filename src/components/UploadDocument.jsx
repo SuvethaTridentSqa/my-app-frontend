@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { extractDocumentChunks, saveRagDocument } from "../api/rag.js";
 import { generateEmbedding, loadEmbeddingModel } from "../ai/embeddingModel.js";
+import { FiLoader, FiUploadCloud } from "react-icons/fi";
 
 export default function UploadDocument({ onUploaded }) {
   const [file, setFile] = useState(null);
@@ -67,7 +68,7 @@ export default function UploadDocument({ onUploaded }) {
         type="submit"
         disabled={busy || !file}
       >
-        {busy ? "Processing..." : "Upload & Index"}
+        {busy ? <FiLoader className="animate-spin" /> : <FiUploadCloud />}
       </button>
       {busy && (
         <div className="upload-progress">

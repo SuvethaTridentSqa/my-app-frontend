@@ -1,3 +1,12 @@
+/* =====================================================
+   sidebar.css — global reset, app shell, sidebar
+   (chat, buttons, feature cards live in chat.css / app.css)
+===================================================== */
+
+/* =========================
+   Global
+========================= */
+
 *,
 *::before,
 *::after {
@@ -8,44 +17,64 @@ html,
 body,
 #root {
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* pages scroll inside .page-content instead */
 }
 
 body {
   margin: 0;
-  /* overflow-x: hidden; */
 }
 
-/* .sidebar {
-  width: 100%;
-  max-width: 260px;
-  min-width: 78px;
-  position: sticky;
-  top: 0;
+/* =========================
+   Page container (scrolls inside the shell)
+   Extra rules for .page-content are in app.css
+========================= */
 
-  display: flex;
-  flex-direction: column;
-
-  background: #f6f5ff;
-  border-right: 1px solid var(--border);
-  padding: 24px 18px;
-
-  overflow-y: auto;
+.page-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow-x: hidden;
+  overflow-y: auto;
+}
 
-  transition: 0.25s;
-  flex-shrink: 0;
-} */
+.initial-page {
+  display: grid;
+  place-items: center;
+  min-height: 10vh;
+  gap: 20px;
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--text-h);
+}
+
+/* =========================
+   Sidebar
+========================= */
 
 .sidebar {
-  height: 100dvh;
+  --sidebar-width: 260px;
+
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: 100dvh;
+  padding: 24px 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #f6f5ff;
+  border-right: 1px solid var(--border);
+  transition: width 0.25s ease;
 }
 
 .sidebar.collapsed {
-  width: 78px;
+  --sidebar-width: 78px;
+  padding-inline: 12px;
 }
+
+/* ---- Brand ---- */
 
 .sidebar-brand {
   display: flex;
@@ -61,15 +90,15 @@ body {
 }
 
 .menu-btn {
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 12px;
-  background: white;
-  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
   cursor: pointer;
   transition: 0.25s;
 }
@@ -80,41 +109,36 @@ body {
 
 .brand-text h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-h);
 }
 
 .brand-text p {
   margin: 2px 0 0;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
 }
 
-.sidebar-status {
-  padding: 10px 14px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
+/* ---- Navigation ---- */
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 16px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 13px 15px;
-  border-radius: 14px;
-  text-decoration: none;
+  padding: 11px 14px;
+  border-radius: 12px;
   color: var(--text-h);
+  font-size: 14px;
   font-weight: 500;
+  text-decoration: none;
   transition: 0.25s;
 }
 
@@ -124,42 +148,21 @@ body {
 }
 
 .nav-icon {
-  min-width: 24px;
   display: flex;
   justify-content: center;
-  font-size: 20px;
+  min-width: 22px;
+  font-size: 18px;
 }
 
-.sidebar.collapsed .nav-link {
-  justify-content: center;
-}
+/* ---- User / logout ---- */
 
-.sidebar.collapsed .nav-label,
-.sidebar.collapsed .brand-text,
-.sidebar.collapsed .sidebar-status {
-  display: none;
-}
-.sidebar.collapsed .sidebar-nav {
-  align-items: center;
-}
-
-.sidebar.collapsed .sidebar-status-container {
-  padding: 0;
-  background: transparent;
-  border: none;
-  justify-content: center;
-}
-
-.sidebar.collapsed .logout-btn {
-  width: 100%;
-  justify-content: center;
-}
 .sidebar-status-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  margin-top: 20px;
+  margin-top: auto; /* pins to the bottom of the sidebar */
   padding: 10px 14px;
   background: #f8fafc;
   border: 1px solid var(--border);
@@ -169,863 +172,199 @@ body {
 .sidebar-status {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 
 .user-name {
-  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #111827;
 }
 
 .user-role {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #6b7280;
   text-transform: capitalize;
 }
 
-.initial-page {
-  display: grid;
-  place-items: center;
-  height: 10vh;
-  gap: 20px;
-  text-align: center;
-  font-size: 1.8rem;
-  color: var(--text-h);
-}
-
-@media (max-width: 960px) {
-  .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-  }
-
-  .sidebar.collapsed {
-    width: 100%;
-  }
-}
-
-/* ===========================
-   PAGE
-=========================== */
-
-.page-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2px;
-}
-
-.page-header h2 {
-  margin: 0;
-}
-
-.page-header p {
-  margin-top: 6px;
-  color: #6b7280;
-}
-
-.chat-page {
-  height: calc(100vh - 80px);
-  overflow: hidden;
-  padding: 20px;
-  margin: 0 auto;
-}
-
-/* ===========================
-   GRID
-=========================== */
-
-.chat-grid {
-  display: grid;
-  grid-template-columns: minmax(260px, 320px) 1fr;
-  gap: 24px;
-  flex: 1;
-  min-height: 0;
-}
-
-.chat-message.failed {
-  border-left: 4px solid #d9534f;
-  background: #fff3f3;
-}
-
-.chat-message.failed .message-role {
-  color: #d9534f;
-  font-weight: 600;
-}
-
-.failed-indicator {
-  color: #d9534f;
-  font-weight: 700;
-  margin-left: 8px;
-}
-
-/* ===========================
-   RAG SOURCES
-=========================== */
-
-.rag-sources {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fafafa;
-}
-
-.rag-sources-list {
-  margin-top: 8px;
-}
-
-.rag-source-item {
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-/* ===========================
-   SIDEBAR
-=========================== */
-
-.chat-sidebar {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: white;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.chat-sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  background: #f8fafc;
-}
-
-.chat-sidebar-header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.chat-list {
-  overflow-y: auto;
-  flex: 1;
-  padding: 12px;
-}
-
-/* ===========================
-   CONVERSATION
-=========================== */
-
-.chat-list-item {
-  width: 100%;
-  border: none;
-  background: #fff;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 10px;
-  text-align: left;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.chat-list-item:hover {
-  background: #f4f4f5;
-}
-
-.chat-list-item.active {
-  background: #eef2ff;
-  border: 1px solid #6366f1;
-}
-
-.chat-list-item span {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chat-list-item small {
-  color: #6b7280;
-}
-
-/* ===========================
-   MAIN
-=========================== */
-
-.chat-main {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  background: white;
-  min-height: 0;
-}
-
-.chat-main-header {
-  padding: 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-.chat-main-header h3 {
-  margin: 0;
-}
-
-/* ===========================
-   MESSAGES
-=========================== */
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: #fafafa;
-}
-
-.chat-message {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 75%;
-}
-
-.chat-message.user {
-  align-self: flex-end;
-}
-
-.chat-message.assistant {
-  align-self: flex-start;
-}
-
-.message-role {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.message-content {
-  padding: 14px 16px;
-  border-radius: 16px;
-  line-height: 1.6;
-  word-break: break-word;
-  white-space: pre-wrap;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-}
-
-.message-point {
-  display: flex;
-  gap: 8px;
-  line-height: 1.5;
-}
-
-.message-point span:first-child {
-  flex-shrink: 0;
-}
-
-.chat-message.user .message-content {
-  background: #2563eb;
-  color: white;
-  background-color: #e38986;
-}
-
-.chat-message.assistant .message-content {
-  background: white;
-  border: 1px solid var(--border);
-  background-color: rgb(184, 167, 230);
-  color: white;
-}
-
-.message-empty {
-  margin: auto;
-  color: #9ca3af;
-}
-
-.message-paragraph {
-  margin: 0 0 12px;
-}
-
-.message-paragraph:last-child {
-  margin-bottom: 0;
-}
-
-.message-list {
-  margin: 0 0 12px;
-  padding-left: 24px;
-}
-
-.message-list:last-child {
-  margin-bottom: 0;
-}
-
-.message-list li {
-  margin-bottom: 6px;
-}
-
-.numbered-list {
-  list-style-type: decimal;
-}
-
-.bullet-list {
-  list-style-type: disc;
-}
-
-.message-content strong {
-  font-weight: 700;
-}
-
-/* ==============================
-LOGOUT BUTTON 
-============================== */
 .logout-btn {
-  width: 38px;
-  height: 38px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
   border: 1px solid var(--border);
+  border-radius: 10px;
   background: white;
+  font-size: 20px;
   cursor: pointer;
   transition: 0.2s ease;
-  position: relative;
-  font-size: 24px;
-}
-
-.tooltip {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  bottom: -35px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  white-space: nowrap;
-  transition: opacity 0.2s;
-}
-
-.logout-btn:hover .tooltip {
-  visibility: visible;
-  opacity: 1;
 }
 
 .logout-btn:hover {
   background-color: #b9acc7;
 }
-/* ===========================
-   FORM
-=========================== */
 
-.chat-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
-  padding: 18px;
-  border-top: 1px solid var(--border);
-  background: white;
+/* Tooltip sits ABOVE the button (below would be clipped by the sidebar) */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: #333;
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
 }
 
-.chat-form textarea {
-  flex: 1;
-  resize: vertical;
-  min-height: 52px;
-  max-height: 180px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 15px;
-  font-family: inherit;
+.logout-btn:hover .tooltip,
+.logout-btn:focus-visible .tooltip {
+  visibility: visible;
+  opacity: 1;
 }
 
-.chat-form textarea:focus {
-  outline: none;
-  border-color: #4f46e5;
+/* ---- Collapsed (desktop icon rail) ---- */
+
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .sidebar-status {
+  display: none;
 }
 
-/* ===========================
-   BUTTONS
-=========================== */
-
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
+.sidebar.collapsed .nav-link {
   justify-content: center;
-  padding: 8px 16px;
-  width: auto;
-  min-width: 90px;
-  border-radius: 999px;
 }
 
-.secondary-button:hover {
-  background: #ececec;
-}
-
-.send-button {
-  height: 42px;
-  min-width: 80px;
+.sidebar.collapsed .sidebar-nav {
   align-items: center;
+}
+
+.sidebar.collapsed .sidebar-status-container {
   justify-content: center;
-  background: #a186bc;
-  color: #ffffff;
-  font-weight: 600;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.send-button:hover {
-  background: #8551b8;
-  color: #ffffff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* ===========================
-   ALERT
-=========================== */
-
-.message-box.warn {
-  margin: 12px 18px;
-}
-
-/* ===========================
-   TABLET
-=========================== */
-
-/* ===========================
-   MOBILE
-=========================== */
-
-/* ===========================
-   SMALL MOBILE
-=========================== */
-
-@media (max-width: 480px) {
-  .chat-sidebar-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .chat-sidebar-header h3 {
-    text-align: center;
-  }
-
-  .chat-main-header {
-    padding: 14px;
-  }
-
-  .chat-messages {
-    padding: 16px;
-  }
-
-  .chat-form {
-    padding: 12px;
-  }
-
-  .message-content {
-    font-size: 14px;
-  }
-
-  .page-header h2 {
-    font-size: 22px;
-  }
-}
-.copy-message-button {
-  display: inline-flex;
-  width: 15px;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 4px 8px;
-  border: none;
+  padding: 0;
   background: transparent;
-  color: #6b7280;
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  border: none;
 }
 
-.copy-message-button:hover {
-  background-color: #f3f4f6;
-  color: #111827;
-}
-
-.copy-message-button:active {
-  background-color: #e5e7eb;
-}
-
-.copy-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.chat-list-item-wrapper {
-  display: flex;
-  align-items: stretch;
+.sidebar.collapsed .logout-btn {
   width: 100%;
-  gap: 6px;
 }
 
-.chat-list-item-wrapper .chat-list-item {
-  flex: 1;
-  min-width: 0;
+.sidebar.collapsed .tooltip {
+  right: auto;
+  left: 0;
 }
 
-.delete-chat-button {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  color: #d9534f;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
+/* =====================================================
+   RESPONSIVE
+===================================================== */
 
-.delete-chat-button:hover {
-  background: #fff1f1;
-  color: #c9302c;
-}
-
-.delete-chat-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Delete confirmation modal */
-
-.delete-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.delete-modal {
-  width: min(450px, 100%);
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-}
-
-.delete-modal h3 {
-  margin: 0 0 12px;
-}
-
-.delete-modal p {
-  margin: 0;
-  line-height: 1.6;
-  color: #444;
-}
-
-.delete-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.delete-confirm-button {
-  border: none;
-  background: #d9534f;
-  color: white;
-  padding: 10px 18px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.delete-confirm-button:hover {
-  background: #c9302c;
-}
-
-.delete-confirm-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button-row-password-div {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-  padding: auto;
-  margin-right: 0;
-  padding-right: 0;
-  gap: 10px;
-}
-.primary-button {
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.primary-button:hover {
-  background-color: #4338ca;
-}
-
-/* ===========================
-   DASHBOARD
-=========================== */
-
-.dashboard-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.dashboard-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.icon-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  cursor: pointer;
-  transition: 0.25s;
-  font-weight: 500;
-}
-
-.icon-link:hover {
-  background: var(--accent-bg);
-  transform: translateY(-2px);
-}
-
-.feature-grid {
-  display: grid;
-}
-
-.feature-card {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: 0.25s;
-  height: auto;
-}
-
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-}
-
-/* .feature-card-image {
-  height: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #eef2ff;
-  font-size: 60px;
-} */
-
-.feature-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 22px;
-  flex: 1;
-}
-
-.feature-card-body h3 {
-  margin: 0;
-}
-
-.feature-card-body p {
-  margin: 0;
-  color: #6b7280;
-  line-height: 1.7;
-  flex: 1;
-}
-
-.feature-tag {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.feature-grid.list {
-  display: flex;
-  flex-direction: column;
-}
-
-.feature-grid.list .feature-card {
-  flex-direction: row;
-  align-items: center;
-}
-
-.feature-grid.list .feature-card-image {
-  width: 170px;
-  height: 170px;
-  flex-shrink: 0;
-}
-
-/* Large desktops */
-@media (min-width: 1440px) {
-  .feature-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* Laptop */
+/* Laptop: slimmer sidebar */
 @media (max-width: 1200px) {
-  .chat-grid {
-    grid-template-columns: 280px 1fr;
+  .sidebar {
+    --sidebar-width: 230px;
+  }
+
+  .sidebar.collapsed {
+    --sidebar-width: 78px;
   }
 }
 
-/* Tablet */
-@media (max-width: 992px) {
-  .sidebar {
-    max-width: 220px;
-  }
+/* Tablet & phone: sidebar becomes a top bar above the page.
+   Needs the app shell (the parent of .sidebar + .page-content)
+   to be a column at this size — see note below. */
+@media (max-width: 960px) {
+  .sidebar,
+  .sidebar.collapsed {
+    --sidebar-width: 100%;
 
-  .chat-grid {
-    grid-template-columns: 240px 1fr;
-  }
-
-  .feature-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .sidebar {
     position: relative;
-    max-width: 100%;
+    width: 100%;
     height: auto;
+    max-height: 65dvh;
+    padding: 12px 16px;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .sidebar-brand {
+    gap: 0;
   }
 
-  .chat-grid {
-    grid-template-columns: 1fr;
+  /* Collapsed = only the brand row is shown; expanded = full menu */
+  .sidebar.collapsed .brand-text {
+    display: block;
   }
 
-  .chat-sidebar {
-    height: 280px;
+  .sidebar.collapsed .sidebar-nav,
+  .sidebar.collapsed .sidebar-status-container {
+    display: none;
   }
 
-  .chat-main {
-    min-height: 65vh;
+  .brand-text h1 {
+    font-size: 18px;
   }
 
-  .dashboard-toolbar,
-  .dashboard-actions {
-    flex-direction: column;
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
   }
 
-  .feature-grid {
-    grid-template-columns: 1fr;
+  .nav-link {
+    padding: 10px 14px;
   }
 
-  .chat-form {
-    flex-direction: column;
-  }
-
-  .send-button {
-    width: 100%;
-  }
-}
-
-/* Small phones */
-@media (max-width: 480px) {
-  .page-content {
-    padding: 14px;
-  }
-
-  .chat-message {
-    max-width: 100%;
-  }
-
-  .feature-card-image {
-    height: 130px;
-    font-size: 48px;
+  .sidebar-status-container {
+    margin-top: 12px;
   }
 }
 
-/* Extra small */
+/* Phone */
+@media (max-width: 600px) {
+  .sidebar,
+  .sidebar.collapsed {
+    padding: 10px 12px;
+  }
+
+  .brand-content {
+    gap: 12px;
+  }
+
+  .brand-text p {
+    display: none;
+  }
+
+  /* Menu becomes a simple vertical list */
+  .sidebar-nav {
+    flex-direction: column;
+  }
+
+  .nav-link {
+    padding: 12px 14px;
+  }
+}
+
+/* Very small phone */
 @media (max-width: 360px) {
-  .page-header h2 {
-    font-size: 1.4rem;
+  .menu-btn {
+    width: 38px;
+    height: 38px;
   }
 
-  .feature-card-body {
-    padding: 16px;
+  .brand-text h1 {
+    font-size: 16px;
   }
 }

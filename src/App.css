@@ -25,6 +25,7 @@
   margin: 10px 0 0;
   color: var(--text);
 }
+
 /* ====================
 ADMIN ACTIVITY
 ======================= */
@@ -1033,5 +1034,70 @@ ANALYTICS
   .link-preview {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* =========================
+   Additions (moved from old layout css)
+========================= */
+
+.primary-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button:hover {
+  background-color: #4338ca;
+}
+
+.button-row-password-div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.feature-grid.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-grid.list .feature-card {
+  flex-direction: row;
+  align-items: center;
+}
+
+.feature-grid.list .feature-card-image {
+  width: 170px;
+  height: 170px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1440px) {
+  .feature-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .feature-grid.list .feature-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .feature-grid.list .feature-card-image {
+    width: 100%;
+    height: 130px;
+    font-size: 48px;
   }
 }

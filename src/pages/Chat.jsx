@@ -16,6 +16,8 @@ import {
 } from "../api/ai.js";
 import { searchRAG, listRagDocuments, deleteRagDocument } from "../api/rag.js";
 import UploadDocument from "../components/UploadDocument";
+import { MdDeleteForever } from "react-icons/md";
+import "./Chat.css";
 
 function stripMarkdown(text) {
   return text
@@ -718,7 +720,7 @@ QUESTION: ${text}`;
               disabled={!activeDocumentId}
               title="Delete selected document"
             >
-              🗑 Delete
+              <MdDeleteForever />
             </button>
           </div>
 
