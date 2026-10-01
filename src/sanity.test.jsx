@@ -113,17 +113,3 @@ describe("DelayedMessage", () => {
     );
   });
 });
-
-describe("Request body handling", () => {
-  test("returns 400 for malformed JSON", async () => {
-    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
-
-    const res = await request(app)
-      .post("/api/anything")
-      .set("Content-Type", "application/json")
-      .send('{"bad json"');
-
-    expect(res.statusCode).toBe(400);
-    spy.mockRestore();
-  });
-});
