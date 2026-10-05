@@ -1,104 +1,148 @@
-:root {
-  --text: #4f4a5f;
-  --text-h: #1b1224;
-  --bg: #faf9ff;
-  --surface: #ffffff;
-  --border: #e4e2ec;
-  --code-bg: #f4f3fc;
-  --accent: #6f4dff;
-  --accent-strong: #4329b8;
-  --accent-bg: rgba(111, 77, 255, 0.12);
-  --accent-border: rgba(111, 77, 255, 0.25);
-  --shadow: rgba(20, 18, 47, 0.08) 0 16px 40px -24px;
+/* =====================================================
+   index.css — design tokens + base
+   Every colour is defined ONCE with light-dark(), so there is
+   no duplicated dark block. Theme is chosen by:
+     <html data-theme="light">  → force light
+     <html data-theme="dark">   → force dark
+     (no attribute)             → follow the OS setting
+   Components must only use these variables, never raw hex.
+===================================================== */
 
-  --sans: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
-  --heading: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+:root {
+  color-scheme: light dark;
+
+  /* text & surfaces */
+  --text: light-dark(#6b6478, #c9bfe0);
+  --text-h: light-dark(#2d2438, #f3edff);
+  --text-mute: light-dark(#9ca3af, #8f86a6);
+  --bg: light-dark(#fdf6f0, #1b1625);
+  --bg-end: light-dark(#f3ebfb, #241d33);
+  --surface: light-dark(#ffffff, #242032);
+  --surface-2: light-dark(#fcfbff, #2a2539); /* panels, tables, empty states */
+  --input-bg: light-dark(#ffffff, #2d2840);
+  --code-bg: light-dark(#f6f0fb, #2d2840);
+  --border: light-dark(#ece3f5, #3d3454);
+
+  /* accent */
+  --accent: light-dark(#b990e8, #c9a6ef);
+  --accent-strong: #8c5bc9; /* fills (buttons) */
+  --accent-text: light-dark(#8c5bc9, #d9bdf7); /* accent used as text */
+  --accent-bg: light-dark(rgba(185, 144, 232, 0.14), rgba(201, 166, 239, 0.16));
+  --accent-border: light-dark(
+    rgba(185, 144, 232, 0.3),
+    rgba(201, 166, 239, 0.35)
+  );
+  --btn-gradient: linear-gradient(
+    135deg,
+    #a77bdc,
+    #8c5bc9
+  ); /* white text stays readable */
+  --primary: light-dark(#4f46e5, #a5a0ff);
+  --primary-solid: #4f46e5;
+  --primary-solid-hover: #4338ca;
+
+  /* status */
+  --danger: light-dark(#d9534f, #ff7f7a);
+  --danger-text: light-dark(#8b2f2f, #ffb4b0);
+  --danger-bg: light-dark(#fff4f4, #3a2227);
+  --success: light-dark(#16a34a, #4ade80);
+
+  /* chat bubbles */
+  --bubble-user: light-dark(#e38986, #b5524f);
+  --bubble-ai: light-dark(#b8a7e6, #6b58a6);
+
+  --overlay: rgba(15, 23, 42, 0.55);
+  --shadow: 0 20px 48px -28px
+    light-dark(rgba(140, 91, 201, 0.12), rgba(0, 0, 0, 0.5));
+  --shadow-sm: 0 4px 14px light-dark(rgba(15, 23, 42, 0.05), rgba(0, 0, 0, 0.3));
+
+  --sans: "Nunito", "Quicksand", system-ui, sans-serif;
+  --heading: "Quicksand", "Nunito", system-ui, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/1.5 var(--sans);
-  letter-spacing: 0.16px;
-  color-scheme: light dark;
+  font: 18px/1.6 var(--sans);
+  letter-spacing: 0.1px;
   color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --surface: #1f2028;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-}
-
-#root {
-  width: min(1126px, 100%);
-  margin: 0 auto;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
 }
 
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--heading);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-h);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-}
-
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-}
-
-p {
-  margin: 0;
-}
-
-button,
-input {
+/* form controls follow the theme everywhere */
+input,
+select,
+textarea,
+button {
   font: inherit;
+  color: inherit;
 }
 
-@media (max-width: 1024px) {
+input,
+select,
+textarea {
+  background: var(--input-bg);
+  color: var(--text-h);
+}
+
+::placeholder {
+  color: var(--text-mute);
+  opacity: 1;
+}
+
+select option {
+  background: var(--surface);
+  color: var(--text-h);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
   :root {
     font-size: 16px;
   }
+}
 
-  h1 {
-    font-size: 36px;
-    margin: 20px 0;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -1,35 +1,28 @@
 /* =====================================================
-   chat.css — AI Chat page + UploadDocument component
-   Depends on variables and shared classes from app.css:
-   --border, --surface, --shadow, --accent, --accent-strong,
-   --accent-bg, --accent-border, --text, --text-h,
+   chat.css — AI Chat page
+   Depends on tokens (index.css) and shared classes (app.css):
    .page-content, .page-header, .secondary-button, .message-box
+   Upload form base styles live in uploaddocuments.css.
 
-   LAYOUT MODEL
-   .chat-page is exactly one screen tall and never taller than
-   the space its parent gives it. Back button + header keep
-   their natural size and .chat-grid takes ALL the remaining
-   height (flex: 1), so nothing depends on a hand-tuned offset.
-   Inside the chat panel only the message list shrinks/scrolls;
-   the input row is pinned, so the Send button is always visible.
+   LAYOUT: .chat-page is one screen tall. Back button + header keep
+   their size, .chat-grid takes the rest, and inside the chat panel
+   only the message list scrolls — the input row stays visible.
 ===================================================== */
 
 .chat-page {
   height: 100dvh;
   max-height: 100%;
   min-height: 0;
-  overflow: hidden;
   max-width: 1400px;
   padding: 20px 24px;
   gap: 14px;
+  overflow: hidden;
 }
 
-/* Back button + header keep their size; only the grid flexes */
 .chat-page > :not(.chat-grid) {
   flex-shrink: 0;
 }
 
-/* Compact header only on the chat page (overrides app.css) */
 .chat-page .page-header {
   margin: 0;
   padding-bottom: 12px;
@@ -38,14 +31,11 @@
 .chat-page .page-header h2 {
   font-size: clamp(22px, 2vw, 28px);
 }
-
 .chat-page .page-header p {
   margin-top: 4px;
 }
 
-/* =========================
-   Layout
-========================= */
+/* ---------- Grid ---------- */
 
 .chat-grid {
   display: grid;
@@ -53,28 +43,28 @@
   align-items: stretch;
   gap: 20px;
   width: 100%;
-
-  /* take whatever height is left under the back button + header */
   flex: 1 1 0;
   min-height: 0;
 }
 
-/* =========================
-   Sidebar
-========================= */
+/* sidebar + main panel share the same card look */
+.chat-sidebar,
+.chat-main {
+  min-height: 0;
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Chat list sidebar ---------- */
 
 .chat-sidebar {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 0;
-  height: 100%;
   padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
 }
 
 .chat-sidebar-header {
@@ -100,13 +90,12 @@
 }
 
 .chat-list-item-wrapper {
-  position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: white;
+  background: var(--input-bg);
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease;
@@ -115,10 +104,19 @@
 .chat-list-item-wrapper:hover {
   border-color: var(--accent-border);
 }
-
 .chat-list-item-wrapper.active {
   border-color: var(--accent);
   background: var(--accent-bg);
+}
+
+.chat-list-item,
+.delete-chat-button {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
 }
 
 .chat-list-item {
@@ -128,46 +126,10 @@
   align-items: flex-start;
   gap: 4px;
   min-width: 0;
-  width: auto;
-  margin: 0;
   padding: 12px 14px;
-  border: 0;
   border-radius: 14px 0 0 14px;
-  background: transparent;
   color: var(--text-h);
-  font: inherit;
   text-align: left;
-  cursor: pointer;
-}
-
-/* Neutralise global button styles and any other .chat-list-item /
-   .active rules so only the wrapper draws the box */
-.chat-list-item-wrapper .chat-list-item,
-.chat-list-item-wrapper .chat-list-item.active,
-.chat-list-item-wrapper .chat-list-item:hover,
-.chat-list-item-wrapper .chat-list-item:focus,
-.chat-list-item-wrapper .delete-chat-button,
-.chat-list-item-wrapper .delete-chat-button:focus {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-
-.chat-list-item-wrapper .chat-list-item:focus-visible,
-.chat-list-item-wrapper .delete-chat-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.chat-list-item-wrapper .delete-chat-button:hover:not(:disabled) {
-  background: #fff4f4;
-  color: #d9534f;
-}
-
-.chat-list-item:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .chat-list-item > span {
@@ -175,8 +137,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .chat-list-item small {
@@ -189,59 +151,50 @@
   place-items: center;
   flex: 0 0 44px;
   width: 44px;
-  margin: 0;
   padding: 0;
-  border: 0;
   border-radius: 0 14px 14px 0;
-  background: transparent;
-  color: #8b2f2f;
+  color: var(--danger-text);
   font-size: 18px;
-  cursor: pointer;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
 }
 
 .delete-chat-button:hover:not(:disabled) {
-  background: #fff4f4;
-  color: #d9534f;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
+.chat-list-item:disabled,
 .delete-chat-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.chat-list-item:focus-visible,
+.delete-chat-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .message-empty {
   padding: 22px;
   border: 1px dashed var(--border);
   border-radius: 16px;
-  background: #fcfbff;
+  background: var(--surface-2);
   color: var(--text);
   font-size: 14px;
   text-align: center;
 }
 
-/* =========================
-   Main Panel
-   Header, sources, picker, upload, status and form keep
-   their natural size (flex-shrink: 0). Only .chat-messages
-   grows/shrinks, so the input is always on screen.
-========================= */
+/* ---------- Main panel ---------- */
 
 .chat-main {
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  min-height: 0;
-  height: 100%;
   padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
   overflow-y: auto; /* last-resort scroll on very short screens */
 }
 
@@ -262,9 +215,7 @@
   font-size: 18px;
 }
 
-/* =========================
-   Messages (takes the leftover height and scrolls)
-========================= */
+/* ---------- Messages ---------- */
 
 .chat-main > .chat-messages {
   flex: 1 1 auto;
@@ -277,7 +228,7 @@
   gap: 14px;
   padding: 20px;
   border-radius: 16px;
-  background: #fafafa;
+  background: var(--surface-2);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -293,7 +244,6 @@
 .chat-message.user {
   align-self: flex-end;
 }
-
 .chat-message.assistant {
   align-self: flex-start;
 }
@@ -301,7 +251,7 @@
 .message-role {
   font-size: 12px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text);
   text-transform: uppercase;
 }
 
@@ -311,36 +261,33 @@
   gap: 8px;
   padding: 14px 16px;
   border-radius: 16px;
+  color: #fff;
   line-height: 1.6;
-  color: var(--text-h);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 .chat-message.user .message-content {
-  background: #e38986;
-  color: white;
+  background: var(--bubble-user);
 }
-
 .chat-message.assistant .message-content {
-  background: rgb(184, 167, 230);
-  color: white;
+  background: var(--bubble-ai);
 }
 
 .chat-message.failed {
   padding: 8px 12px;
-  border-left: 4px solid #d9534f;
+  border-left: 4px solid var(--danger);
   border-radius: 12px;
-  background: #fff3f3;
+  background: var(--danger-bg);
 }
 
-.chat-message.failed .message-role {
-  color: #d9534f;
+.chat-message.failed .message-role,
+.failed-indicator {
+  color: var(--danger);
 }
 
 .failed-indicator {
   margin-left: 8px;
-  color: #d9534f;
   font-weight: 700;
 }
 
@@ -353,11 +300,9 @@
 .message-point span:first-child {
   flex-shrink: 0;
 }
-
 .message-content strong {
   font-weight: 700;
 }
-
 .message-paragraph {
   margin: 0;
 }
@@ -370,11 +315,9 @@
 .message-list li + li {
   margin-top: 4px;
 }
-
 .numbered-list {
   list-style-type: decimal;
 }
-
 .bullet-list {
   list-style-type: disc;
 }
@@ -383,7 +326,7 @@
   margin: auto;
   border: 0;
   background: transparent;
-  color: #9ca3af;
+  color: var(--text-mute);
 }
 
 .copy-message-button {
@@ -394,7 +337,7 @@
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: white;
+  background: var(--surface);
   color: var(--text);
   font-size: 12px;
   cursor: pointer;
@@ -405,7 +348,7 @@
 
 .copy-message-button:hover {
   background: var(--accent-bg);
-  color: var(--accent-strong);
+  color: var(--accent-text);
 }
 
 .copy-icon {
@@ -413,7 +356,6 @@
   align-items: center;
 }
 
-/* Status boxes inside the chat panel: no big outer margin */
 .chat-main .message-box {
   margin: 0;
   padding: 10px 14px;
@@ -421,23 +363,21 @@
   line-height: 1.45;
 }
 
-/* =========================
-   RAG Sources
-========================= */
+/* ---------- RAG sources ---------- */
 
 .rag-sources {
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: #fcfbff;
+  background: var(--surface-2);
   font-size: 14px;
 }
 
 .rag-sources-list {
   display: grid;
   gap: 6px;
-  margin-top: 8px;
   max-height: 110px;
+  margin-top: 8px;
   overflow-y: auto;
 }
 
@@ -454,16 +394,14 @@
   color: var(--text);
 }
 
-/* =========================
-   Document Picker
-========================= */
+/* ---------- Document picker ---------- */
 
 .rag-document-picker {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
-  width: 80%;
+  gap: 10px;
+  width: min(100%, 80%);
 }
 
 .rag-document-picker label {
@@ -478,20 +416,19 @@
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
-  color: var(--text-h);
-  font: inherit;
   font-size: 14px;
   cursor: pointer;
 }
 
-.rag-document-picker select:focus {
+.rag-document-picker select:focus,
+.chat-form textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.rag-document-picker .secondary-button {
+.rag-document-picker .secondary-button,
+.chat-main .upload-document-form .secondary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -500,100 +437,30 @@
   font-size: 18px;
 }
 
-.rag-document-picker .secondary-button:disabled {
+.rag-document-picker .secondary-button:disabled,
+.chat-main .upload-document-form .secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-/* =========================
-   Upload Document
-========================= */
-
-.upload-document-form {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+/* Compact variant of the upload form inside the chat panel
+   (base styles: uploaddocuments.css) */
+.chat-main .upload-document-form {
+  width: min(100%, 80%);
+  margin-top: 0;
   padding: 10px 14px;
-  border: 1px dashed var(--border);
+  border-style: dashed;
   border-radius: 16px;
-  background: #faf8ff;
-  width: 80%;
 }
 
-.upload-document-form input[type="file"] {
-  flex: 1;
+.chat-main .upload-document-form input[type="file"] {
   min-width: 160px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--text-h);
-}
-
-.upload-document-form input[type="file"]::file-selector-button {
-  margin-right: 12px;
-  padding: 6px 12px;
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
+  padding: 0;
+  border: 0;
   background: transparent;
-  color: var(--accent-strong);
-  font: inherit;
-  cursor: pointer;
 }
 
-.upload-document-form .secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  padding: 8px 12px;
-  font-size: 18px;
-}
-
-.upload-document-form .secondary-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.upload-document-form > small {
-  flex-basis: 100%;
-  color: var(--text);
-}
-
-.upload-document-form .message-box {
-  flex-basis: 100%;
-  margin: 0;
-}
-
-.upload-progress {
-  flex-basis: 100%;
-  display: grid;
-  gap: 6px;
-}
-
-.upload-progress-bar {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
-  transition: width 0.25s ease;
-}
-
-.upload-progress small {
-  color: var(--text);
-}
-
-.animate-spin {
-  animation: chat-spin 1s linear infinite;
-}
-
-@keyframes chat-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* =========================
-   Chat Form
-========================= */
+/* ---------- Chat form ---------- */
 
 .chat-form {
   display: grid;
@@ -602,7 +469,6 @@
   gap: 6px 12px;
 }
 
-/* pinned to the bottom of the chat panel, even if it has to scroll */
 .chat-main > .chat-form {
   position: sticky;
   bottom: 0;
@@ -618,16 +484,7 @@
   padding: 10px 16px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: white;
-  font: inherit;
   resize: none;
-  box-sizing: border-box;
-}
-
-.chat-form textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .chat-form small {
@@ -641,18 +498,17 @@
   padding: 10px 22px;
   border: 0;
   border-radius: 999px;
-  background: #a186bc;
-  color: #ffffff;
-  font: inherit;
+  background: var(--accent-strong);
+  color: #fff;
   font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.3s ease,
+    filter 0.2s ease,
     transform 0.2s ease;
 }
 
 .chat-form .send-button:hover:not(:disabled) {
-  background: #8551b8;
+  filter: brightness(1.12);
   transform: translateY(-1px);
 }
 
@@ -661,9 +517,7 @@
   opacity: 0.55;
 }
 
-/* =========================
-   Delete Modal
-========================= */
+/* ---------- Delete modal ---------- */
 
 .delete-modal-overlay {
   position: fixed;
@@ -672,18 +526,18 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--overlay);
 }
 
 .delete-modal {
   width: min(100%, 420px);
   max-height: 90dvh;
-  overflow-y: auto;
   padding: 26px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: white;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
-  box-sizing: border-box;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 .delete-modal h3 {
@@ -706,8 +560,7 @@
   border: 0;
   border-radius: 8px;
   background: #d9534f;
-  color: white;
-  font: inherit;
+  color: #fff;
   cursor: pointer;
 }
 
@@ -721,55 +574,49 @@
 }
 
 /* =====================================================
-   RESPONSIVE — by screen WIDTH
+   RESPONSIVE — by width
 ===================================================== */
 
-/* Large desktop / wide monitors */
 @media (min-width: 1600px) {
   .chat-page {
     max-width: 1560px;
   }
-
   .chat-grid {
     grid-template-columns: 340px minmax(0, 1fr);
   }
 }
 
-/* Laptop */
 @media (max-width: 1280px) {
   .chat-grid {
     grid-template-columns: 270px minmax(0, 1fr);
     gap: 16px;
   }
-
   .chat-message {
     max-width: 90%;
   }
 }
 
-/* Small laptop / large tablet landscape */
 @media (max-width: 1024px) {
   .chat-page {
     padding: 16px;
   }
-
   .chat-grid {
     grid-template-columns: 240px minmax(0, 1fr);
     gap: 14px;
   }
-
-  .chat-sidebar {
-    padding: 14px;
+  .chat-sidebar,
+  .chat-main {
     border-radius: 20px;
   }
-
+  .chat-sidebar {
+    padding: 14px;
+  }
   .chat-main {
     padding: 16px;
-    border-radius: 20px;
   }
 }
 
-/* Tablet portrait and below: stack sidebar above the chat */
+/* Tablet portrait & below: sidebar stacks above the chat */
 @media (max-width: 860px) {
   .chat-page {
     height: auto;
@@ -787,14 +634,10 @@
     height: auto;
     max-height: 210px;
   }
-
-  /* The chat itself fills most of the screen */
   .chat-main {
-    height: 80vh;
     height: 80dvh;
     min-height: 520px;
   }
-
   .chat-message {
     max-width: 95%;
   }
@@ -804,33 +647,38 @@
     align-items: flex-start;
     gap: 10px;
   }
+
+  .rag-document-picker,
+  .chat-main .upload-document-form {
+    width: 100%;
+  }
 }
 
-/* Large phone */
 @media (max-width: 600px) {
   .chat-page {
     padding: 12px 10px;
     gap: 12px;
   }
 
-  .chat-main {
-    padding: 14px 12px;
-    border-radius: 18px;
-    gap: 10px;
-    min-height: 500px;
-  }
-
   .chat-sidebar {
     max-height: 180px;
     border-radius: 18px;
   }
-
-  .chat-message {
-    max-width: 100%;
-    padding: 12px 14px;
+  .chat-main {
+    padding: 14px 12px;
+    gap: 10px;
+    min-height: 500px;
+    border-radius: 18px;
   }
 
+  .chat-messages {
+    padding: 14px;
+  }
+  .chat-message {
+    max-width: 100%;
+  }
   .message-content {
+    padding: 12px 14px;
     font-size: 14px;
   }
 
@@ -842,12 +690,6 @@
   .rag-document-picker select {
     width: 100%;
     min-width: 0;
-  }
-
-  .upload-document-form input[type="file"] {
-    min-width: 0;
-    width: 100%;
-    flex-basis: 100%;
   }
 
   .chat-form small,
@@ -863,45 +705,35 @@
   .delete-modal {
     padding: 20px;
   }
-
   .delete-modal-actions {
     flex-direction: column-reverse;
   }
-
   .delete-modal-actions button {
     width: 100%;
   }
 }
 
-/* Small phone */
 @media (max-width: 380px) {
   .chat-page .page-header h2 {
     font-size: 20px;
   }
-
   .chat-main {
     padding: 12px 10px;
   }
-
   .chat-list-item {
     padding: 10px 12px;
   }
 }
 
 /* =====================================================
-   RESPONSIVE — by screen HEIGHT
-   (the fix for "chat box hidden at 100% zoom": short
-   screens and zoomed-in browsers get a tighter layout)
+   RESPONSIVE — by height (short laptops / zoomed browsers)
 ===================================================== */
 
-/* Short laptop screens (e.g. 768px tall or 1080p at 125–150% zoom) */
 @media (min-width: 861px) and (max-height: 820px) {
   .chat-page {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-block: 12px;
     gap: 10px;
   }
-
   .chat-page .page-header p {
     display: none;
   }
@@ -910,36 +742,29 @@
     padding: 14px 16px;
     gap: 8px;
   }
-
   .chat-main-header {
     padding-bottom: 6px;
   }
-
   .chat-form textarea {
     max-height: 70px;
   }
-
   .rag-sources-list {
     max-height: 80px;
   }
 }
 
-/* Very short screens / heavy zoom */
 @media (min-width: 861px) and (max-height: 640px) {
   .chat-form small {
     display: none;
   }
-
   .chat-form textarea {
     max-height: 54px;
   }
-
   .chat-main {
     padding: 10px 14px;
   }
 }
 
-/* Phones in landscape */
 @media (max-height: 500px) and (orientation: landscape) {
   .chat-page {
     height: auto;
@@ -950,29 +775,14 @@
   .chat-grid {
     flex: none;
   }
-
   .chat-page .page-header p {
     display: none;
   }
-
   .chat-main {
     height: auto;
     min-height: 420px;
   }
-
   .chat-sidebar {
     max-height: 150px;
-  }
-}
-
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .animate-spin {
-    animation-duration: 2.5s;
-  }
-
-  .upload-progress-bar,
-  .chat-form .send-button {
-    transition: none;
   }
 }
