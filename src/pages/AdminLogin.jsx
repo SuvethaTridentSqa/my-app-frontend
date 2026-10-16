@@ -19,11 +19,10 @@ export default function AdminLogin() {
     async function loadCaptcha() {
       try {
         const response = await fetchCaptcha();
-        console.log("CAPTCHA RESPONSE:", response);
         setCaptchaId(response.id);
         setCaptchaExpression(response.expression || "Enter captcha");
       } catch (error) {
-        console.error("CAPTCHA ERROR:", error);
+        console.error("[ADMIN LOGIN] Failed to load captcha:", error);
         setCaptchaExpression("Unable to load captcha");
       }
     }
@@ -47,14 +46,8 @@ export default function AdminLogin() {
         throw new Error("No authentication token returned by server");
       }
       setAuth(user, token);
-      localStorage.setItem("user", JSON.stringify(user));
-      // console.log("Admin login successful:", user)
-      // console.log("====Token====:", token);
       navigate("/dashboard");
     } catch (err) {
-      // console.error("Login Error:", err);
-      console.error("Response:", err.response);
-      // console.error("Data:", err.response?.data);
       setError(
         err.response?.data?.message || err.message || "Admin login failed.",
       );

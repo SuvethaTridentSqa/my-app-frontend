@@ -102,16 +102,9 @@ export default function Chat() {
       setConversations(list);
     } catch (err) {
       console.error("[CHAT] Conversation loading failed:", err);
-      if (err?.response?.status === 401) {
-        setError("Your session is no longer valid. Please log in again.");
-        setTimeout(() => {
-          navigate("/login", { replace: true, state: { expired: true } });
-        }, 1000);
-        return;
-      }
       setError(err?.response?.data?.message || "Unable to load conversations.");
     }
-  }, [navigate]);
+  }, []);
 
   const loadConversation = useCallback(async (conversationId) => {
     if (!conversationId) return;
@@ -134,10 +127,6 @@ export default function Chat() {
       setRagSources([]);
     } catch (err) {
       console.error("[CHAT] Conversation loading failed:", err);
-      if (err?.response?.status === 401) {
-        setError("Your session is no longer valid. Please log in again.");
-        return;
-      }
       setError(err?.response?.data?.message || "Unable to load conversation.");
     }
   }, []);
@@ -164,10 +153,6 @@ export default function Chat() {
       await loadConversations();
     } catch (err) {
       console.error("[CHAT] New chat creation failed:", err);
-      if (err?.response?.status === 401) {
-        setError("Your session is no longer valid. Please log in again.");
-        return;
-      }
       setError(err?.response?.data?.message || "Unable to create new chat.");
     }
   }, [loading, deletingConversation, loadConversations]);
@@ -430,7 +415,7 @@ QUESTION: ${text}`;
 
   useEffect(() => {
     if (authLoading) return;
-    if (!auth?.isAuthenticated || !auth?.token) {
+    if (!auth?.isAuthenticated || !auth?.accessToken) {
       hasLoadedConversationsRef.current = false;
       return;
     }
@@ -441,7 +426,7 @@ QUESTION: ${text}`;
   }, [
     authLoading,
     auth?.isAuthenticated,
-    auth?.token,
+    auth?.accessToken,
     loadConversations,
     loadDocuments,
   ]);
@@ -451,18 +436,6 @@ QUESTION: ${text}`;
       hasLoadedConversationsRef.current = false;
     }
   }, [auth?.isAuthenticated]);
-
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      setError("Your session has expired. Please log in again.");
-      setTimeout(() => {
-        navigate("/login", { replace: true, state: { expired: true } });
-      }, 1000);
-    };
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () =>
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
-  }, [navigate]);
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && !event.shiftKey) {

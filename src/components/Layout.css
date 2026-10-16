@@ -40,6 +40,8 @@
   font-size: 18px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  padding: 10px;
+  margin: 10px;
 }
 
 .theme-toggle-button:hover {

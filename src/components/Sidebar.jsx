@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import {
   HiHome,
@@ -63,19 +62,14 @@ const links = [
 ];
 
 export default function Sidebar() {
-  const navigate = useNavigate();
   const { logout } = useAuth();
   const { auth } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-  const handleLogout = () => {
-    logout();
-
-    if (auth.role === "admin") {
-      localStorage.removeItem("adminUser");
-      navigate("/admin-login");
-    } else {
-      localStorage.removeItem("user");
-      navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("[SIDEBAR] Failed to revoke the server session:", error);
     }
   };
 

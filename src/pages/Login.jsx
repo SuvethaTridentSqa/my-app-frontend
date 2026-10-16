@@ -19,11 +19,10 @@ export default function Login() {
     async function loadCaptcha() {
       try {
         const response = await fetchCaptcha();
-        console.log("CAPTCHA RESPONSE:", response);
         setCaptchaId(response.id);
         setCaptchaExpression(response.expression || "Enter captcha");
       } catch (error) {
-        console.error("CAPTCHA ERROR:", error);
+        console.error("[LOGIN] Failed to load captcha:", error);
         setCaptchaExpression("Unable to load captcha");
       }
     }
@@ -40,11 +39,8 @@ export default function Login() {
         captchaId,
         captchaAnswer,
       });
-      // console.log("[LOGIN] Full response:", response);
       const user = response?.data?.user;
       const token = response?.data?.token;
-      // console.log("[LOGIN] User:", user);
-      // console.log("[LOGIN] Token received:", !!token);
       if (!user) {
         throw new Error("No user returned by server");
       }
@@ -52,21 +48,8 @@ export default function Login() {
         throw new Error("No authentication token returned by server");
       }
       setAuth(user, token);
-      const storedAuth = localStorage.getItem("shortlyAuth");
-      // console.log("[LOGIN] Stored auth:", storedAuth);
-      if (storedAuth) {
-        try {
-          const parsed = JSON.parse(storedAuth);
-          // console.log("[LOGIN] Stored token exists:", !!parsed.token);
-          // console.log("[LOGIN] Stored user:", parsed.user);
-          // console.log("[LOGIN] Stored role:", parsed.role);
-        } catch (storageError) {
-          // console.error("[LOGIN] Failed to inspect stored auth:", storageError);
-        }
-      }
       navigate("/dashboard");
     } catch (err) {
-      // console.error("[LOGIN] Failed:", err);
       setError(
         err?.response?.data?.message ||
           err?.message ||

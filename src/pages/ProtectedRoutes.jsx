@@ -2,8 +2,8 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const { auth, loading } = useAuth();
-  if (loading) {
+  const { auth, loading, logoutInProgress } = useAuth();
+  if (loading || logoutInProgress) {
     return (
       <div
         style={{

@@ -11,9 +11,8 @@ import {
   HiLink,
   HiLockClosed,
   HiGlobeAlt,
-  HiUser,
-  HiShieldCheck,
   HiChatBubbleLeftRight,
+  HiWrenchScrewdriver,
 } from "react-icons/hi2";
 
 const featureCards = [
@@ -53,6 +52,18 @@ const featureCards = [
     label: "Geo insights",
     icon: <HiGlobeAlt />,
   },
+  {
+    title: "Admin Activity",
+    description: "Monitor and manage administrative actions.",
+    label: "Admin control",
+    icon: <HiWrenchScrewdriver />,
+  },
+  {
+    title: "Randomized Titles",
+    description: "Generate unique and memorable titles.",
+    label: "Creative branding",
+    icon: <HiWrenchScrewdriver />,
+  },
 ];
 
 export default function Dashboard() {
@@ -79,7 +90,6 @@ export default function Dashboard() {
   //     status: "completed",
   //   });
   // };
-
   const [viewMode, setViewMode] = useState("grid");
   const navigate = useNavigate();
   // setviewMode('grid');
@@ -88,31 +98,20 @@ export default function Dashboard() {
       <header className="page-header">
         <div>
           <h2>Dashboard</h2>
-          {/* <button onClick={completeTask}>Complete Task</button> */}
           <p>Manage your shortened URLs, analytics, and security settings.</p>
+          {/* <button onClick={completeTask}>Complete Task</button> */}
         </div>
-        {/* modify - place the respective user/admin count here-in future */}
-        <UsageBadge count={2} />
-      </header>
-      <div className="dashboard-toolbar">
         <div className="dashboard-actions">
-          <button className="icon-link" onClick={() => navigate("/login")}>
-            <HiUser /> User login
-          </button>
-          <button
-            className="icon-link"
-            onClick={() => navigate("/admin-login")}
-          >
-            <HiShieldCheck /> Admin login
-          </button>
           <button
             className="icon-link"
             onClick={() => navigate("/dashboard/chat")}
           >
             <HiChatBubbleLeftRight /> AI Chat
           </button>
+          {/* modify - place the respective user/admin count here-in future */}
+          <UsageBadge count={2} />
         </div>
-      </div>
+      </header>
       <div className={`feature-grid ${viewMode}`}>
         {featureCards.map((feature) => (
           <article key={feature.title} className={`feature-card ${viewMode}`}>

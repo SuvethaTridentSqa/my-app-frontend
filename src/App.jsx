@@ -11,6 +11,7 @@ import PasswordProtection from "./pages/PasswordProtection";
 import GeoHeatmap from "./pages/GeoHeatmap";
 import AdminActivity from "./pages/AdminActivity";
 import Login from "./pages/Login";
+import LoginSelection from "./pages/LoginSelection";
 import AdminLogin from "./pages/AdminLogin";
 import LinkVisualizer from "./pages/LinkVisualizer";
 import Chat from "./pages/Chat";
@@ -48,6 +49,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/select-login" element={<LoginSelection />} />
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route
         path="/dashboard"

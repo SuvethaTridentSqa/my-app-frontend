@@ -5,6 +5,9 @@
 ===================================================== */
 
 /* ---------- Page layout ---------- */
+.feature-grid {
+  overflow-y: hidden !important;
+}
 
 .page-content {
   display: flex;
@@ -63,20 +66,43 @@
   gap: 20px;
 }
 
-.dashboard-toggle,
+/* .dashboard-toggle,
 .dashboard-actions,
 .button-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+} */
+/* move AI Chat button to right or left  */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.dashboard-actions .icon-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ---------- Feature cards ---------- */
+/* html,
+body {
+  overflow-x: hidden;
+} */
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 8px;
+  overflow-x: hidden;
 }
 
 .feature-list {
@@ -162,6 +188,8 @@
 .feature-grid.list {
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  overflow-x: hidden;
 }
 
 .feature-grid.list .feature-card {
