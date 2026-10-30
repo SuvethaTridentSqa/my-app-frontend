@@ -2,7 +2,7 @@
 
 jest.mock("axios", () => {
   const instances = [];
-  const create = jest.fn(() => {
+  const create = jest.fn((config) => {
     const instance = jest.fn();
     instance.interceptors = {
       request: {
@@ -12,11 +12,13 @@ jest.mock("axios", () => {
       },
       response: {
         use: jest.fn((onSuccess, onError) => {
+          instance.responseSuccessInterceptor = onSuccess;
           instance.responseInterceptor = onError;
         }),
       },
     };
     instance.post = jest.fn();
+    instance.config = config;
     instances.push(instance);
     return instance;
   });
@@ -58,6 +60,88 @@ describe("authenticated API client", () => {
     unregister();
   });
 
+  test("uses the versioned API base URL for both clients", () => {
+    expect(apiInstance.config.baseURL).toBe("http://localhost:5000/api/v1");
+    expect(refreshClient.config.baseURL).toBe(apiInstance.config.baseURL);
+  });
+
+  test("unwraps the response payload and keeps envelope metadata", () => {
+    const response = {
+      data: {
+        success: true,
+        message: "Request completed successfully",
+        data: { items: [{ id: "item-1" }] },
+        meta: { nextPage: 2 },
+      },
+      status: 200,
+    };
+
+    expect(apiInstance.responseSuccessInterceptor(response)).toBe(response);
+    expect(response.data).toEqual({ items: [{ id: "item-1" }] });
+    expect(response.success).toBe(true);
+    expect(response.meta).toEqual({ nextPage: 2 });
+    expect(response.message).toBe("Request completed successfully");
+  });
+
+  test("leaves non-envelope responses unchanged", () => {
+    const response = { data: { token: "token-1" }, status: 200 };
+
+    expect(apiInstance.responseSuccessInterceptor(response)).toBe(response);
+    expect(response.data).toEqual({ token: "token-1" });
+  });
+
+  test("normalizes backend field errors and preserves HTTP status", async () => {
+    const error = {
+      response: {
+        status: 422,
+        data: {
+          success: false,
+          message: "Validation failed",
+          data: null,
+          meta: { errors: [{ field: "email", message: "Email is invalid" }] },
+        },
+      },
+    };
+
+    await expect(apiInstance.responseInterceptor(error)).rejects.toBe(error);
+    expect(error.status).toBe(422);
+    expect(error.message).toBe("Validation failed: email: Email is invalid");
+    expect(error.response.data.message).toBe(error.message);
+    expect(error.validationErrors).toEqual([
+      { field: "email", message: "Email is invalid" },
+    ]);
+  });
+
+  test("does not expose server error details in the user-facing message", async () => {
+    const error = {
+      response: {
+        status: 500,
+        data: {
+          success: false,
+          message: "Database connection string leaked",
+          data: null,
+          meta: { errors: [] },
+        },
+      },
+    };
+
+    await expect(apiInstance.responseInterceptor(error)).rejects.toBe(error);
+    expect(error.response.data.message).toBe(
+      "The server could not complete the request. Please try again.",
+    );
+    expect(error.backendMessage).toBe("Database connection string leaked");
+  });
+
+  test("normalizes network failures", async () => {
+    const error = new Error("Network Error");
+
+    await expect(apiInstance.responseInterceptor(error)).rejects.toBe(error);
+    expect(error.status).toBeNull();
+    expect(error.message).toBe(
+      "Unable to reach the server. Please check your connection.",
+    );
+  });
+
   test("attaches the current access token to protected requests", async () => {
     const config = await apiInstance.requestInterceptor({ headers: {} });
 
@@ -73,9 +157,18 @@ describe("authenticated API client", () => {
       config: request,
       response: { status: 401 },
     };
-    refreshClient.post.mockResolvedValue({
-      data: { token: "new-access-token" },
-    });
+    refreshClient.post.mockImplementation(() =>
+      Promise.resolve(
+        refreshClient.responseSuccessInterceptor({
+          data: {
+            success: true,
+            message: "Request completed successfully",
+            data: { token: "new-access-token" },
+            meta: null,
+          },
+        }),
+      ),
+    );
     apiInstance.mockResolvedValue({ data: "retried" });
 
     await expect(apiInstance.responseInterceptor(unauthorized)).resolves.toEqual(
@@ -94,7 +187,8 @@ describe("authenticated API client", () => {
     let resolveRefresh;
     refreshClient.post.mockReturnValue(
       new Promise((resolve) => {
-        resolveRefresh = resolve;
+        resolveRefresh = (response) =>
+          resolve(refreshClient.responseSuccessInterceptor(response));
       }),
     );
     apiInstance.mockImplementation((config) =>
@@ -117,7 +211,14 @@ describe("authenticated API client", () => {
     });
 
     expect(refreshClient.post).toHaveBeenCalledTimes(1);
-    resolveRefresh({ data: { token: "new-access-token" } });
+    resolveRefresh({
+      data: {
+        success: true,
+        message: "Request completed successfully",
+        data: { token: "new-access-token" },
+        meta: null,
+      },
+    });
     await expect(Promise.all([first, second])).resolves.toHaveLength(2);
     expect(apiInstance).toHaveBeenCalledTimes(2);
   });

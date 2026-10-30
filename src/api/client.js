@@ -1,6 +1,90 @@
 import axios from "axios";
 
-const baseURL = "http://localhost:5000/api";
+const apiOrigin =
+  import.meta.env?.VITE_API_URL || "http://localhost:5000";
+const baseURL = `${apiOrigin.replace(/\/+$/, "")}/api/v1`;
+
+function unwrapApiEnvelope(response) {
+  const envelope = response.data;
+  if (
+    !envelope ||
+    typeof envelope !== "object" ||
+    typeof envelope.success !== "boolean" ||
+    typeof envelope.message !== "string" ||
+    !Object.prototype.hasOwnProperty.call(envelope, "data") ||
+    !Object.prototype.hasOwnProperty.call(envelope, "meta")
+  ) {
+    return response;
+  }
+
+  response.data = envelope.data;
+  response.success = envelope.success;
+  response.message = envelope.message;
+  response.meta = envelope.meta;
+  return response;
+}
+
+function normalizeApiError(error) {
+  if (!error.response) {
+    error.status = null;
+    error.validationErrors = [];
+    error.message = "Unable to reach the server. Please check your connection.";
+    return error;
+  }
+
+  const response = error.response;
+  const envelope = response.data;
+  const backendMessage =
+    typeof envelope?.message === "string" ? envelope.message : "";
+  const validationErrors = Array.isArray(envelope?.meta?.errors)
+    ? envelope.meta.errors
+    : [];
+  const validationMessage = validationErrors
+    .map((validationError) => {
+      if (typeof validationError === "string") return validationError;
+      if (
+        !validationError ||
+        typeof validationError.message !== "string"
+      ) {
+        return "";
+      }
+      return typeof validationError.field === "string"
+        ? `${validationError.field}: ${validationError.message}`
+        : validationError.message;
+    })
+    .filter(Boolean)
+    .join("; ");
+
+  error.status = response.status;
+  error.backendMessage = backendMessage;
+  error.validationErrors = validationErrors;
+
+  if (response.status >= 500) {
+    response.data =
+      envelope && typeof envelope === "object"
+        ? {
+            ...envelope,
+            message: "The server could not complete the request. Please try again.",
+          }
+        : {
+            message: "The server could not complete the request. Please try again.",
+          };
+    error.message = response.data.message;
+  } else if (validationMessage) {
+    const message = backendMessage
+      ? `${backendMessage}: ${validationMessage}`
+      : validationMessage;
+    response.data =
+      envelope && typeof envelope === "object"
+        ? { ...envelope, message }
+        : { message };
+    error.message = message;
+  } else if (backendMessage) {
+    error.message = backendMessage;
+  }
+
+  return error;
+}
 
 const api = axios.create({
   baseURL,
@@ -17,6 +101,8 @@ const refreshClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+refreshClient.interceptors.response.use(unwrapApiEnvelope, normalizeApiError);
 
 let authCallbacks = null;
 let refreshPromise = null;
@@ -48,8 +134,9 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  unwrapApiEnvelope,
   async (error) => {
+    normalizeApiError(error);
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
 

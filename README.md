@@ -22,6 +22,16 @@ It also provides analytics, QR code generation, geo-traffic insights, and an AI 
 - npm
 - Backend/API server
 
+## API configuration
+
+The frontend sends backend requests to `/api/v1`. Set `VITE_API_URL` to the
+backend origin (without an `/api` path) when it differs from
+`http://localhost:5000`. For example:
+
+```env
+VITE_API_URL=https://backend.example.com
+```
+
 ## Frontend Project Structure
 
 ```text

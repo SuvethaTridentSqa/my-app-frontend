@@ -1,21 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import api from "../api/api.js";
 
 export default function DiscordSender() {
   const [text, setText] = useState("");
 
   const sendToDiscord = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/send-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          channelId: "YOUR_TARGET_DISCORD_CHANNEL_ID",
-        }),
+      const response = await api.post("/send-message", {
+        message: text,
+        channelId: "YOUR_TARGET_DISCORD_CHANNEL_ID",
       });
 
-      const data = await response.json();
-      if (data.success) alert("Message sent to Discord successfully!");
+      if (response.success) alert("Message sent to Discord successfully!");
     } catch (err) {
       console.error("Failed to send message:", err);
     }

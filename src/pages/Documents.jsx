@@ -29,10 +29,10 @@ export default function Documents() {
         fileName: file.name,
         chunks: processedChunks,
       });
-      alert("Document indexed successfully.");
+      alert("Indexing Completed.");
     } catch (error) {
       console.error(error);
-      alert("Document indexing failed.");
+      alert("Indexing failed.");
     } finally {
       setLoading(false);
     }

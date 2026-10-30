@@ -41,7 +41,7 @@ export default function UploadDocument({ onUploaded }) {
         fileName,
         chunks: embeddedChunks,
       });
-      setStatus("Document indexed successfully.");
+      setStatus("Indexing Completed.");
       setFile(null);
       onUploaded?.(result.document);
     } catch (err) {
